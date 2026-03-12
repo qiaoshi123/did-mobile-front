@@ -1,0 +1,505 @@
+---
+name: create-api
+description: 创建 API 接口封装。当用户需要在已有服务模块中新增 API 接口、或新建一个服务模块时使用此技能。
+allowed-tools: []
+disable: false
+---
+
+# 创建 API 接口封装
+
+## 功能说明
+
+基于项目 `src/http/` 分层架构，规范化地创建 API 封装代码。支持两种场景：
+
+1. **在已有服务中新增 API 接口**（高频）
+2. **新建一个服务模块**（低频）
+
+> **⚠️ 强制约束：执行此技能时，必须严格遵守 `.codebuddy/rules/05-API规范.md` 中定义的所有规范，包括但不限于：文件结构、类型命名、拦截器选配、禁止事项和检查清单。如有冲突，以 `05-API规范.md` 为准。**
+
+---
+
+## 项目架构概览
+
+```
+src/http/
+├── index.ts                       # 🔑 统一导出入口（业务层推荐从 '@/http' 导入）
+├── core/                          # 核心引擎层（🔒 不允许修改）
+│   ├── types.ts                   # CoreRequestOptions, CoreResponse<T>, CoreResponseCode
+│   ├── request.ts                 # ApiRequest 类（基于 uni.request + 拦截器链）
+│   └── index.ts                   # 统一导出
+│
+├── interceptors/                  # 公共拦截器层（✏️ 可扩展，跨服务共享）
+│   ├── request-common-header.ts   # 公共请求头拦截器
+│   ├── request-auth-header.ts     # 鉴权请求头拦截器
+│   ├── response-check-auth.ts     # token 校验拦截器
+│   ├── response-replace-error-msg.ts  # 错误码中文映射拦截器（工厂模式）
+│   └── index.ts                   # 统一导出
+│
+├── shared-types.ts                # 跨服务共享的业务类型（多个服务都用到的类型放这里）
+│
+└── services/                      # 业务服务层
+    └── <service-name>/            # 每个服务一个文件夹
+        ├── client.ts              # 实例化 ApiRequest，配置网关/拦截器
+        ├── errors.ts              # 🆕 可选：该服务专属的错误码映射（使用 responseReplaceErrorMsg 时创建）
+        ├── interceptors.ts        # 🆕 可选：该服务专属的拦截器（按需创建）
+        ├── api-types.ts           # 接口请求参数和响应数据的 TS 类型
+        ├── model-types.ts         # 业务模型的 TS 类型（当前服务内跨接口复用）
+        └── index.ts               # API 函数聚合导出（业务层唯一调用入口）
+```
+
+### `http/index.ts` 统一导出说明
+
+`src/http/index.ts` 是整个 HTTP 模块的总入口，它聚合导出了：
+- **核心层**：`CoreResponseCode`、`CoreResponse` 等核心类型
+- **公共拦截器**：`requestCommonHeaderInterceptor`、`responseReplaceErrorMsg` 等跨服务共享拦截器
+- **共享类型**：`PageParams`、`PageResult` 等跨服务通用类型
+- **各服务 API 函数**：通过 `export *` 重导出各服务 `index.ts` 中的 API 函数
+- **各服务业务类型**：通过 `export type *` 重导出各服务的 `api-types.ts` 和 `model-types.ts` 中的类型
+
+**业务层导入方式：**
+
+```typescript
+// ✅ 推荐：从统一入口导入（简洁）
+import { didGetUserInfo } from '@/http'
+import type { DidGetUserInfoResult, PageParams } from '@/http'
+
+// ✅ 也支持：从具体服务导入（当需要明确来源时）
+import { didGetUserInfo } from '@/http/services/did'
+import type { DidGetUserInfoResult } from '@/http/services/did/api-types'
+```
+
+> **⚠️ 维护要求：** 新增服务时，必须在 `src/http/index.ts` 中添加对应的 `export *` 和 `export type *` 语句。
+
+### 已有服务一览
+
+| 服务名 | 目录 | client 变量名 |
+|--------|------|--------------|
+| did | `services/did/` | `didClient` |
+| did-app | `services/did-app/` | `didappClient` |
+| invoice | `services/invoice/` | `invoiceClient` |
+| tdh | `services/tdh/` | `tdhClient` |
+
+> 各服务的网关、baseUrl 拼接规则、拦截器组合各不相同，具体请查看对应服务的 `client.ts`。
+
+### 核心类型速查
+
+```typescript
+// 请求选项（可选传入）
+interface CoreRequestOptions {
+    header?: Record<string, string>
+    params?: Record<string, any>     // GET 查询参数 或 通用参数
+    data?: any                       // POST 请求体
+    timeout?: number
+    loading?: boolean
+    loadingText?: string
+}
+
+// 统一响应结构
+interface CoreResponse<T = any> {
+    code: number    // 业务状态码
+    data: T         // 响应数据
+    msg: string     // 提示信息
+    ok: boolean     // ✅ 业务是否成功（由 ApiRequest 根据 successCodes 自动设置，推荐用此字段判断成功）
+}
+```
+
+---
+
+## 场景一：在已有服务中新增 API 接口
+
+### 步骤总览
+
+1. 在 `api-types.ts` 中定义请求参数和响应数据类型
+2. 如有可复用的业务模型，在 `model-types.ts` 中定义
+3. 在 `index.ts` 中编写 API 函数并导出
+4. 如接口有新的错误码，在 `errors.ts` 中补充映射
+
+### 详细模板
+
+#### 第 1 步：定义接口类型 — `api-types.ts`
+
+```typescript
+// src/http/services/<service-name>/api-types.ts
+
+// ========== 获取 XXX 信息 ==========
+
+/** 获取 XXX 信息 - 请求参数 */
+export interface <ServicePrefix>GetXxxInfoParams {
+    id: string
+}
+
+/** 获取 XXX 信息 - 响应数据 */
+export interface <ServicePrefix>GetXxxInfoResult {
+    id: string
+    name: string
+    status: number
+    createdAt: string
+}
+
+// ========== 创建 XXX ==========
+
+/** 创建 XXX - 请求体 */
+export interface <ServicePrefix>CreateXxxBody {
+    name: string
+    description?: string
+}
+
+/** 创建 XXX - 响应数据 */
+export interface <ServicePrefix>CreateXxxResult {
+    id: string
+}
+
+// ========== 获取 XXX 列表 ==========
+
+/** 获取 XXX 列表 - 请求参数 */
+export interface <ServicePrefix>GetXxxListParams {
+    page: number
+    pageSize: number
+    keyword?: string
+}
+
+/** 获取 XXX 列表 - 响应数据 */
+export interface <ServicePrefix>GetXxxListResult {
+    list: <ServicePrefix>XxxItem[]
+    total: number
+    page: number
+    pageSize: number
+}
+
+/** 列表项类型（如果只在此接口使用就放在 api-types，当前服务内跨接口复用放 model-types，跨服务共用放 shared-types） */
+export interface <ServicePrefix>XxxItem {
+    id: string
+    name: string
+}
+```
+
+**命名规范（防止跨服务类型名冲突）：**
+- 所有类型名必须加 **服务前缀**：`{ServicePrefix}{Action}{Resource}{Params|Body|Result}`
+- 服务前缀对照表：
+
+| 服务 | 前缀 | 示例 |
+|------|------|------|
+| did | `Did` | `DidGetUserInfoParams` |
+| did-app | `Didapp` | `DidappGetXxxListResult` |
+| invoice | `Invoice` | `InvoiceCreateOrderBody` |
+| tdh | `Tdh` | `TdhQueryFileInfoResult` |
+
+- Action 常用词：`Get`、`Create`、`Update`、`Delete`、`Query`、`Submit`
+
+#### 第 2 步：定义业务模型（可选） — `model-types.ts`
+
+```typescript
+// src/http/services/<service-name>/model-types.ts
+
+/** <服务名> - 用户 DID 信息（当前服务内多个接口共用） */
+export interface <ServicePrefix>DIDInfo {
+    did: string
+    publicKey: string
+    status: 'active' | 'revoked'
+    createdAt: string
+}
+```
+
+**什么时候放 `model-types.ts`：**
+- 一个类型被 **当前服务内 2 个及以上接口** 引用时
+- 代表一个独立的 **业务实体**（如用户、文件、授权记录等）
+- 类型名同样需要加 **服务前缀**（如 `DidDIDInfo`、`TdhFileRecord`）
+
+#### 第 2.5 步：跨服务共享类型（可选） — `shared-types.ts`
+
+如果某个类型被 **多个服务** 共同使用（如分页结构、公共枚举、基础实体），放到 `src/http/shared-types.ts`：
+
+```typescript
+// src/http/shared-types.ts
+
+/** 通用分页请求参数 */
+export interface PageParams {
+    page: number
+    pageSize: number
+}
+
+/** 通用分页响应结构 */
+export interface PageResult<T = any> {
+    list: T[]
+    total: number
+    page: number
+    pageSize: number
+}
+```
+
+**类型提升规则：**
+- 当一个类型从仅 1 个服务使用变成被 2 个及以上服务引用时，应将其从服务的 `model-types.ts` 提升到 `shared-types.ts`，并去掉服务前缀
+- 提升后需在原服务 `model-types.ts` 中添加迁移注释，提示后续从 `shared-types.ts` 引入
+
+**类型放置决策流程：**
+
+```
+这个类型被几个服务使用？
+  ├── 只有 1 个服务 → 被几个接口使用？
+  │     ├── 只有 1 个接口 → 放 api-types.ts
+  │     └── 2 个及以上 → 放 model-types.ts
+  └── 2 个及以上服务 → 放 shared-types.ts（不加服务前缀）
+```
+
+#### 第 3 步：编写 API 函数 — `index.ts`
+
+```typescript
+// src/http/services/<service-name>/index.ts
+import { <serviceName>Client } from './client'
+import type {
+    <ServicePrefix>GetXxxInfoParams,
+    <ServicePrefix>GetXxxInfoResult,
+    <ServicePrefix>CreateXxxBody,
+    <ServicePrefix>CreateXxxResult,
+    <ServicePrefix>GetXxxListParams,
+    <ServicePrefix>GetXxxListResult,
+} from './api-types'
+
+// ========== XXX 模块 ==========
+
+/** 获取 XXX 信息 */
+export const <servicePrefix>GetXxxInfo = (params: <ServicePrefix>GetXxxInfoParams) => {
+    return <serviceName>Client.get<<ServicePrefix>GetXxxInfoResult>('/xxx/info', { params })
+}
+
+/** 创建 XXX */
+export const <servicePrefix>CreateXxx = (data: <ServicePrefix>CreateXxxBody) => {
+    return <serviceName>Client.post<<ServicePrefix>CreateXxxResult>('/xxx/create', { data })
+}
+
+/** 获取 XXX 列表 */
+export const <servicePrefix>GetXxxList = (params: <ServicePrefix>GetXxxListParams) => {
+    return <serviceName>Client.get<<ServicePrefix>GetXxxListResult>('/xxx/list', { params })
+}
+
+/** 删除 XXX */
+export const <servicePrefix>DeleteXxx = (id: string) => {
+    return <serviceName>Client.post<null>('/xxx/delete', { data: { id } })
+}
+```
+
+**函数命名规范（防止跨服务函数名冲突）：**
+- 函数名必须加 **服务前缀**（小驼峰）：`<servicePrefix>{Action}{Resource}`
+- 服务前缀对照表：
+
+| 服务 | 函数前缀 | 示例 |
+|------|---------|------|
+| did | `did` | `didGetUserInfo`、`didCreateDID` |
+| did-app | `didapp` | `didappGetFileList`、`didappSubmitOrder` |
+| invoice | `invoice` | `invoiceCreateOrder`、`invoiceGetDetail` |
+| tdh | `tdh` | `tdhQueryFile`、`tdhCreateAuth` |
+
+**其他编写规范：**
+- 每个 API 函数使用 `export const` + 箭头函数
+- 必须添加 JSDoc 注释说明接口用途
+- GET 请求参数传 `{ params }`，POST 请求数据传 `{ data }`
+- 泛型 `<T>` 传响应数据的类型（即 `CoreResponse<T>` 中的 `T`）
+- 如果响应无有效 data，泛型传 `null`
+- 使用 `// ========== 模块名 ==========` 注释分隔不同业务模块
+- 按业务模块分组排列，不要随意穿插
+
+#### 第 4 步：补充错误码（如需要） — `errors.ts`
+
+```typescript
+// src/http/services/<service-name>/errors.ts
+export const <serviceName>Errors: Record<number | string, string> = {
+    300100: '参数错误',
+    300101: '时间格式错误',
+    401104: '数据库错误',
+    // ... 新增的错误码
+}
+```
+
+---
+
+## 场景二：新建一个服务模块
+
+### 前置信息收集
+
+创建新服务前，必须确认以下信息（如用户未提供，需主动询问）：
+
+| 信息 | 说明 | 示例 |
+|------|------|------|
+| 服务名称 | 英文小写，用作目录名和 client 变量名 | `did`、`invoice` |
+| 所属网关 | `GATEWAY_CONFIG` 中已有的网关名，如需新网关需在所有环境中补充 | `app`、`tdh`、`invoice` |
+| API 版本号 | URL 路径中的版本标识 | `v1`、`v10700` |
+| baseUrl 拼接规则 | 网关地址后的 URL 路径拼接方式 | `{gateway}/api/{version}/did` |
+| 是否需要鉴权 | 是否添加 `requestAuthHeaderInterceptor` | 是/否 |
+| 是否需要 token 校验 | 是否添加 `responseCheckAuthInterceptor` | 是/否 |
+| 是否需要错误码映射 | 是否使用 `responseReplaceErrorMsg`，及初始 errors 内容 | 是（空对象）/ 否 |
+| successCodes | 成功状态码，默认 `200000`，不同则需指定 | `200000`、`0` |
+
+### 创建步骤
+
+#### 1. 创建目录和 5 个文件
+
+```
+src/http/services/<service-name>/
+├── client.ts
+├── errors.ts          # 可选：使用 responseReplaceErrorMsg 时创建
+├── api-types.ts
+├── model-types.ts
+└── index.ts
+```
+
+#### 2. `client.ts` — 实例化 ApiRequest
+
+```typescript
+import { GATEWAY_CONFIG } from '@/config'
+import { ApiRequest } from '../../core'
+import {
+    requestCommonHeaderInterceptor,
+    requestAuthHeaderInterceptor,     // 需要鉴权时引入
+    responseCheckAuthInterceptor,     // 需要 token 校验时引入
+    responseReplaceErrorMsg,          // 需要错误码映射时引入
+} from '../../interceptors'
+import { <serviceName>Errors } from './errors'  // 使用 responseReplaceErrorMsg 时引入
+
+/**
+ * <服务中文名>服务端
+ * 网关：使用 <网关名> 网关
+ * baseUrl规则：{gateway}+"<url规则>"
+ */
+const version = '<version>'
+const baseUrl = `${GATEWAY_CONFIG.<env>.<gateway>}<url-pattern>`
+const <serviceName>Client = new ApiRequest({
+    baseUrl,
+    // successCodes: 默认为 [CoreResponseCode.SUCCESS]（即 200000）
+    // 如果该服务的成功码不同，在此指定，如：successCodes: 0 或 successCodes: [0, 200]
+    requestInterceptors: [
+        requestCommonHeaderInterceptor,
+        requestAuthHeaderInterceptor,     // 可选：需要鉴权时添加
+    ],
+    responseInterceptors: [
+        responseCheckAuthInterceptor,     // 可选：需要 token 校验时添加
+        responseReplaceErrorMsg(<serviceName>Errors), // 可选：需要错误码映射时添加
+    ],
+})
+export { <serviceName>Client }
+```
+
+> **注意：** 除 `requestCommonHeaderInterceptor` 必选外，其余拦截器均由各服务根据业务需求自行决定是否使用。不使用的拦截器直接删除对应行和 import 即可。
+
+**拦截器选配规则：**
+
+| 拦截器 | 来源 | 何时使用 |
+|--------|------|---------|
+| `requestCommonHeaderInterceptor` | `../../interceptors` | **必加**，所有服务都需要公共请求头 |
+| `requestAuthHeaderInterceptor` | `../../interceptors` | 需要用户登录态的服务添加 |
+| `responseCheckAuthInterceptor` | `../../interceptors` | 需要检查 token 过期/失效的服务添加 |
+| `responseReplaceErrorMsg(errors)` | `../../interceptors` | 可选，需要错误码中文映射时添加 |
+| 服务私有拦截器 | `./interceptors` | 仅当前服务使用的特殊拦截器，按需创建 |
+
+**拦截器放置决策：**
+
+```
+这个拦截器被几个服务使用？
+  ├── 只有 1 个服务 → 放该服务目录下的 interceptors.ts
+  └── 2 个及以上服务 → 放 interceptors/ 目录（每个拦截器独立文件）
+```
+
+#### 3. `errors.ts` — 初始化错误码映射（使用 `responseReplaceErrorMsg` 时创建）
+
+```typescript
+export const <serviceName>Errors = {}
+```
+
+> 如果该服务不使用 `responseReplaceErrorMsg` 拦截器，则**不需要**创建此文件。
+
+#### 4. `api-types.ts` — 初始化接口类型文件
+
+```typescript
+// 接口类型定义文件
+// 使用 TS 类型定义接口的 Params/Body 和 Result
+
+export {}
+```
+
+#### 5. `model-types.ts` — 初始化业务模型文件
+
+```typescript
+// 使用 TS 类型定义接口使用到的业务模型类型
+
+export {}
+```
+
+#### 6. `index.ts` — 初始化 API 聚合文件
+
+```typescript
+import { <serviceName>Client } from './client'
+```
+
+#### 7. 更新 `src/http/index.ts` — 注册新服务到统一导出
+
+在 `src/http/index.ts` 中追加以下内容：
+
+```typescript
+// ========== 各服务 API 函数 ==========
+export * from './services/<service-name>'
+
+// ========== 各服务类型 ==========
+export type * from './services/<service-name>/api-types'
+export type * from './services/<service-name>/model-types'
+```
+
+---
+
+## 业务层调用规范
+
+### 正确的调用方式
+
+```typescript
+// ✅ 推荐：从统一入口导入 API 函数、核心类型、业务类型
+import { didGetXxxInfo, didCreateXxx } from '@/http'
+import type { DidGetXxxInfoResult } from '@/http'
+
+const loadData = async () => {
+    const res = await didGetXxxInfo({ id: '123' })
+    if (res.ok) {
+        // 处理成功数据 — res.data 已有完整类型推导
+        console.log(res.data)
+    } else {
+        // 处理业务错误（msg 已被拦截器替换为中文）
+        uni.showToast({ title: res.msg, icon: 'none' })
+    }
+}
+```
+
+```typescript
+// ✅ 同一页面混用多个服务 — 函数名天然不冲突
+import { didGetUserInfo, didappGetUserInfo } from '@/http'
+import type { DidGetUserInfoResult, DidappGetUserInfoResult } from '@/http'
+```
+
+```typescript
+// ✅ 也支持从具体服务路径导入（当需要明确来源时）
+import { didGetUserInfo } from '@/http/services/did'
+import type { DidGetUserInfoResult } from '@/http/services/did/api-types'
+```
+
+### 禁止事项
+
+- ❌ **禁止**直接使用 `uni.request` 发请求
+- ❌ **禁止**在页面/组件中直接 `import client`，应通过 `index.ts` 导出的函数调用
+- ❌ **禁止**在 `index.ts` 以外的地方编写 API 调用函数
+- ❌ **禁止**硬编码 API 路径和网关地址
+- ❌ **禁止**跨服务 import 另一个服务的 `client`
+- ❌ **禁止**跨服务 import 另一个服务的类型（如需共用，必须提取到 `shared-types.ts`）
+- ❌ **禁止**修改 `core/` 层的任何文件（除非架构升级）。新增拦截器放 `interceptors/` 或服务目录
+
+---
+
+## 检查清单
+
+新增 API 时，确认以下事项：
+
+- [ ] 请求参数和响应数据都有完整的 TS 类型定义
+- [ ] **类型名和函数名都加了服务前缀**（防止跨服务冲突）
+- [ ] API 函数有 JSDoc 注释
+- [ ] GET 请求用 `{ params }`，POST 请求用 `{ data }`
+- [ ] 泛型传入了正确的响应数据类型
+- [ ] 如有新错误码，已添加到 `errors.ts`
+- [ ] 所有 API 函数都通过 `index.ts` 导出
+- [ ] 单接口专用类型放 `api-types.ts`，服务内跨接口复用放 `model-types.ts`
+- [ ] 跨服务共享的类型放 `src/http/shared-types.ts`（不加服务前缀）
+- [ ] 如为新建服务，已在 `src/http/index.ts` 中添加 `export *` 和 `export type *`
