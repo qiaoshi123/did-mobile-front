@@ -1,4 +1,4 @@
-import { CoreResponse } from '../core/types'
+import type { CoreResponse } from '../core/types'
 
 /**
  * 网络请求后拦截器

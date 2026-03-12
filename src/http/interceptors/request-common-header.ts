@@ -1,4 +1,4 @@
-import { CoreRequestOptions } from '../core/types'
+import type { CoreRequestOptions } from '../core/types'
 
 /**
  * 网络请求前拦截器

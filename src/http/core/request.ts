@@ -1,4 +1,5 @@
-import { CoreRequestOptions, CoreResponse, CoreResponseCode } from './types'
+import { CoreResponseCode } from './types'
+import type { CoreRequestOptions, CoreResponse } from './types'
 
 /**
  * API 请求封装类
