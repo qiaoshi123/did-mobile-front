@@ -1,3 +1,26 @@
 import { didappClient } from "./client";
+import type {
+    DidappAuthCodeVerifyBody,
+    DidappLoginBody,
+    DidappLoginResult,
+} from './api-types'
+import type { DidappUserInfo } from './model-types'
 
+// ========== 登录模块 ==========
 
+/** 验证码验证 */
+export const didappAuthCodeVerify = (data: DidappAuthCodeVerifyBody) => {
+    return didappClient.post<null>('/login/authCodeVerify', { data })
+}
+
+/** 登录 */
+export const didappLogin = (data: DidappLoginBody) => {
+    return didappClient.post<DidappLoginResult>('/login/login', { data })
+}
+
+// ========== 用户模块 ==========
+
+/** 获取用户信息 */
+export const didappGetUserInfo = () => {
+    return didappClient.post<DidappUserInfo>('/auth/getUserInfo')
+}
