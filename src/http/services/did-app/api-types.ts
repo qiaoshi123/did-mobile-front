@@ -30,3 +30,19 @@ export interface DidappLoginResult {
     /** 用户信息 */
     useInfo: DidappUserInfo
 }
+
+// ========== 获取app后台信息 ==========
+
+/** 获取app后台信息 - 响应数据 */
+export interface DidappGetHealthResult {
+    /** app后台版本 */
+    version: string
+    /** 服务名 */
+    app_chinese_name: string
+    /** DID签发机构 */
+    didIssuer: string
+    /** 是否开启个人认证，true表示开启 */
+    personAuthEnable: boolean
+    /** 下载链接 */
+    downloadLink: string
+}

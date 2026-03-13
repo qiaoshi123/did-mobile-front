@@ -3,6 +3,7 @@ import type {
     DidappAuthCodeVerifyBody,
     DidappLoginBody,
     DidappLoginResult,
+    DidappGetHealthResult,
 } from './api-types'
 import type { DidappUserInfo } from './model-types'
 
@@ -23,4 +24,11 @@ export const didappLogin = (data: DidappLoginBody) => {
 /** 获取用户信息 */
 export const didappGetUserInfo = () => {
     return didappClient.post<DidappUserInfo>('/auth/getUserInfo')
+}
+
+// ========== 健康检查模块 ==========
+
+/** 获取app后台信息 */
+export const didappGetHealth = () => {
+    return didappClient.get<DidappGetHealthResult>('/health')
 }

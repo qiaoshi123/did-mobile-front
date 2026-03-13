@@ -9,7 +9,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { didappGetHealth } from '@/http'
+
 const title = ref('Hello')
+
+const res = await didappGetHealth()
+if (res.ok) {
+    console.log(res.data.version, res.data.personAuthEnable)
+}
+
 </script>
 
 <style>

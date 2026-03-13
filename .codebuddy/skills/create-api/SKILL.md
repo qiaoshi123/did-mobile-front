@@ -1,6 +1,13 @@
 ---
 name: create-api
-description: 创建 API 接口封装。当用户需要在已有服务模块中新增 API 接口、或新建一个服务模块时使用此技能。
+description: 创建、编写、新增、封装 API 接口。当用户提到以下任意场景时必须使用此技能： 编写API、写接口、创建接口、新增接口、封装API、添加API、对接接口、接入接口、 调用后端接口、根据文档写API、根据接口文档编写、按照API文档实现、 新建服务模块、添加服务模块。 触发关键词包括但不限于：API、api、接口、interface、endpoint、服务端、后端接口、 接口文档、API文档、swagger、请求封装。 只要涉及 HTTP 请求的接口封装工作，都应该触发此技能。
+  创建、编写、新增、封装 API 接口。当用户提到以下任意场景时必须使用此技能：
+  编写API、写接口、创建接口、新增接口、封装API、添加API、对接接口、接入接口、
+  调用后端接口、根据文档写API、根据接口文档编写、按照API文档实现、
+  新建服务模块、添加服务模块。
+  触发关键词包括但不限于：API、api、接口、interface、endpoint、服务端、后端接口、
+  接口文档、API文档、swagger、请求封装。
+  只要涉及 HTTP 请求的接口封装工作，都应该触发此技能。
 allowed-tools: []
 disable: false
 ---
@@ -39,7 +46,7 @@ src/http/
 │
 └── services/                      # 业务服务层
     └── <service-name>/            # 每个服务一个文件夹
-        ├── client.ts              # 实例化 ApiRequest，配置网关/拦截器
+        ├── client.ts              # 实例化 ApiRequest，配置网关/拦截器（含 H5/非H5 条件编译）
         ├── errors.ts              # 🆕 可选：该服务专属的错误码映射（使用 responseReplaceErrorMsg 时创建）
         ├── interceptors.ts        # 🆕 可选：该服务专属的拦截器（按需创建）
         ├── api-types.ts           # 接口请求参数和响应数据的 TS 类型
@@ -81,6 +88,23 @@ import type { DidGetUserInfoResult } from '@/http/services/did/api-types'
 
 > 各服务的网关、baseUrl 拼接规则、拦截器组合各不相同，具体请查看对应服务的 `client.ts`。
 
+### 网关配置数据源
+
+网关配置的唯一数据源是 `src/config/gateway.json`，包含三部分：
+
+| 字段 | 说明 |
+|------|------|
+| `runtimeEnv` | 当前运行环境（`dev` / `preview` / `production` / `sywl`） |
+| `gatewayName` | 网关名称标识（`app` / `tdh` / `invoice`），H5 环境下作为代理路径前缀 |
+| `gatewayConfig` | 各环境对应的网关真实地址 |
+
+`src/config/index.ts` 从 `gateway.json` 读取并导出 `runtimeEnv`、`GATEWAY_NAME`、`GATEWAY_CONFIG`。
+`vite.config.ts` 同样从 `gateway.json` 读取，动态生成 H5 本地开发反向代理配置。
+
+**切换环境**只需修改 `gateway.json` 中的 `"runtimeEnv"` 字段，client 网关地址和 Vite 代理目标同时联动。
+
+**新增网关**需同时在 `gateway.json` 的 `gatewayName` 和所有环境的 `gatewayConfig` 中添加。
+
 ### 核心类型速查
 
 ```typescript
@@ -109,12 +133,30 @@ interface CoreResponse<T = any> {
 
 ### 步骤总览
 
-1. 在 `api-types.ts` 中定义请求参数和响应数据类型
+0. **识别公共参数**（必须先做）— 读取该服务 `client.ts` 中引用的所有拦截器源码，识别已被自动注入的 header / params / data 字段
+1. 在 `api-types.ts` 中定义请求参数和响应数据类型（**排除**第 0 步识别出的公共参数）
 2. 如有可复用的业务模型，在 `model-types.ts` 中定义
-3. 在 `index.ts` 中编写 API 函数并导出
+3. 在 `index.ts` 中编写 API 函数并导出（**不传入**第 0 步识别出的公共参数）
 4. 如接口有新的错误码，在 `errors.ts` 中补充映射
 
 ### 详细模板
+
+#### 第 0 步（必须先做）：识别公共参数 — 读取拦截器源码
+
+> ⚠️ **这一步在每次接入新 API 时都必须执行，不可跳过。**
+
+**目的：** 识别出拦截器已经自动注入的 header、params、data 等字段，避免在 API 函数中重复传入。
+
+**操作：**
+1. 读取该服务的 `client.ts`，找到 `requestInterceptors` 数组中引用的所有请求拦截器
+2. 逐一读取这些拦截器的源码文件（包括公共拦截器 `src/http/interceptors/` 下的和服务私有拦截器 `./interceptors.ts`）
+3. 分析每个请求拦截器自动设置了哪些字段（如 `options.header.xxx = ...`、`options.params.xxx = ...`、`options.data.xxx = ...`）
+4. 记录下所有已被拦截器自动注入的字段名列表
+
+**后续步骤中的排除规则：**
+- **定义类型时**：接口文档中属于公共参数的字段，不纳入该接口的 Params/Body 类型定义
+- **编写 API 函数时**：不在函数参数或调用 options 中重复传入这些字段
+- **判断依据**：如果接口文档中的某个 header / query / body 字段与拦截器自动注入的字段同名，则视为公共参数，由拦截器统一处理
 
 #### 第 1 步：定义接口类型 — `api-types.ts`
 
@@ -321,7 +363,7 @@ export const <serviceName>Errors: Record<number | string, string> = {
 | 信息 | 说明 | 示例 |
 |------|------|------|
 | 服务名称 | 英文小写，用作目录名和 client 变量名 | `did`、`invoice` |
-| 所属网关 | `GATEWAY_CONFIG` 中已有的网关名，如需新网关需在所有环境中补充 | `app`、`tdh`、`invoice` |
+| 所属网关 | `gateway.json` 中已有的网关名，如需新网关需在 `gatewayName` 和所有环境的 `gatewayConfig` 中补充 | `app`、`tdh`、`invoice` |
 | API 版本号 | URL 路径中的版本标识 | `v1`、`v10700` |
 | baseUrl 拼接规则 | 网关地址后的 URL 路径拼接方式 | `{gateway}/api/{version}/did` |
 | 是否需要鉴权 | 是否添加 `requestAuthHeaderInterceptor` | 是/否 |
@@ -345,7 +387,7 @@ src/http/services/<service-name>/
 #### 2. `client.ts` — 实例化 ApiRequest
 
 ```typescript
-import { GATEWAY_CONFIG } from '@/config'
+import { GATEWAY_CONFIG, GATEWAY_NAME, runtimeEnv } from '@/config'
 import { ApiRequest } from '../../core'
 import {
     requestCommonHeaderInterceptor,
@@ -358,10 +400,19 @@ import { <serviceName>Errors } from './errors'  // 使用 responseReplaceErrorMs
 /**
  * <服务中文名>服务端
  * 网关：使用 <网关名> 网关
- * baseUrl规则：{gateway}+"<url规则>"
+ * H5环境baseUrl："/<gateway名称标识>/<url-pattern>/<version>/<service-name>"
+ * 非H5环境baseUrl规则："<gateway具体地址>/<url-pattern>/<version>/<service-name>"
  */
 const version = '<version>'
-const baseUrl = `${GATEWAY_CONFIG.<env>.<gateway>}<url-pattern>`
+let baseUrl = ''
+// #ifdef H5
+baseUrl = `/${GATEWAY_NAME.<gateway>}/<url-pattern>/${version}/<service-name>`
+// #endif
+
+// #ifndef H5
+baseUrl = `${GATEWAY_CONFIG[runtimeEnv][GATEWAY_NAME.<gateway>]}/<url-pattern>/${version}/<service-name>`
+// #endif
+
 const <serviceName>Client = new ApiRequest({
     baseUrl,
     // successCodes: 默认为 [CoreResponseCode.SUCCESS]（即 200000）
@@ -377,6 +428,13 @@ const <serviceName>Client = new ApiRequest({
 })
 export { <serviceName>Client }
 ```
+
+**条件编译说明（H5 跨域方案）：**
+- **H5 环境**（`#ifdef H5`）：baseUrl 使用 `/${GATEWAY_NAME.xxx}/...` 相对路径，请求发到同源的当前域名，避免跨域
+  - 本地开发：由 `vite.config.ts` 的 proxy 根据网关名前缀转发到真实网关
+  - 生产部署：由 Nginx 根据网关名前缀反向代理到真实网关
+- **非 H5 环境**（`#ifndef H5`）：baseUrl 使用 `${GATEWAY_CONFIG[runtimeEnv][GATEWAY_NAME.xxx]}/...` 绝对路径直连，因为 App/小程序原生没有跨域限制
+- `runtimeEnv` 控制环境切换，不再硬编码 `dev` / `production` 等
 
 > **注意：** 除 `requestCommonHeaderInterceptor` 必选外，其余拦截器均由各服务根据业务需求自行决定是否使用。不使用的拦截器直接删除对应行和 import 即可。
 
@@ -493,6 +551,8 @@ import type { DidGetUserInfoResult } from '@/http/services/did/api-types'
 
 新增 API 时，确认以下事项：
 
+- [ ] **已执行第 0 步：读取了该服务所有请求拦截器源码，识别出公共参数**
+- [ ] **接口文档中属于公共参数的字段，未被写入类型定义和 API 函数中**
 - [ ] 请求参数和响应数据都有完整的 TS 类型定义
 - [ ] **类型名和函数名都加了服务前缀**（防止跨服务冲突）
 - [ ] API 函数有 JSDoc 注释
@@ -503,3 +563,6 @@ import type { DidGetUserInfoResult } from '@/http/services/did/api-types'
 - [ ] 单接口专用类型放 `api-types.ts`，服务内跨接口复用放 `model-types.ts`
 - [ ] 跨服务共享的类型放 `src/http/shared-types.ts`（不加服务前缀）
 - [ ] 如为新建服务，已在 `src/http/index.ts` 中添加 `export *` 和 `export type *`
+- [ ] 如为新建服务，`client.ts` 中使用 `#ifdef H5` / `#ifndef H5` 条件编译设置 baseUrl
+- [ ] 如为新建服务，`client.ts` 中使用 `GATEWAY_CONFIG[runtimeEnv]` 而非硬编码环境
+- [ ] 如需新网关，已在 `gateway.json` 的 `gatewayName` 和所有环境的 `gatewayConfig` 中添加

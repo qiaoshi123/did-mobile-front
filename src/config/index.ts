@@ -1,24 +1,21 @@
+import gateway from './gateway.json'
 
-//api 多套环境配置
-export const GATEWAY_CONFIG = {
-    dev: {
-        app: 'http://192.168.1.181:30003',
-        tdh: 'http://192.168.1.76:8060',
-        invoice: 'http://112.64.115.246:19986',
-    },
-    preview: {
-        app: 'https://did-api-pre.cnbn.org.cn',
-        tdh: 'https://tdh-api-pre.cnbn.org.cn:19980',
-        invoice: 'http://112.64.115.246:19986',
-    },
-    production: {
-        app: 'https://did-api.cnbn.org.cn:19996',
-        tdh: 'https://tdh-api.cnbn.org.cn:19981',
-        invoice: 'https://invoice.yrd-tdh.com:19976',
-    },
-    sywl: {
-        app: "https://did-gateway-gjsywl.cnbn.org.cn",
-        tdh: "https://tdh-gjsywl.cnbn.org.cn",
-        invoice: "https://invoice.yrd-tdh.com:19976"
-    }
+/** 网关名称类型 */
+export type GatewayNameKey = keyof typeof gateway.gatewayConfig.dev
+
+/** 运行环境类型 */
+export type RuntimeEnvKey = keyof typeof gateway.gatewayConfig
+
+/** 运行环境 dev | production | preview | sywl */
+export const runtimeEnv: RuntimeEnvKey = gateway.runtimeEnv as RuntimeEnvKey
+
+/** 网关名称标识 */
+export const GATEWAY_NAME = gateway.gatewayName as {
+    readonly app: GatewayNameKey
+    readonly tdh: GatewayNameKey
+    readonly invoice: GatewayNameKey
 }
+
+/** 网关地址配置（全部环境） */
+export const GATEWAY_CONFIG = gateway.gatewayConfig
+
