@@ -46,3 +46,13 @@ export interface DidappGetHealthResult {
     /** 下载链接 */
     downloadLink: string
 }
+
+// ========== 云备份私钥 ==========
+
+/** 云备份私钥 - 请求体 */
+export interface DidappPrivateKeyBackupBody {
+    /** 私钥(base64编码) */
+    priKey: string
+    /** 接受私钥碎片的电话或者邮箱 */
+    phoneOrEmail: string[]
+}
