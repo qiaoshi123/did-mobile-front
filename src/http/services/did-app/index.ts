@@ -5,6 +5,7 @@ import type {
     DidappLoginResult,
     DidappGetHealthResult,
     DidappPrivateKeyBackupBody,
+    DidappSendEnKeyBody,
 } from './api-types'
 import type { DidappUserInfo } from './model-types'
 
@@ -39,4 +40,11 @@ export const didappGetHealth = () => {
 /** 云备份私钥 */
 export const didappPrivateKeyBackup = (data: DidappPrivateKeyBackupBody) => {
     return didappClient.post<null>('/auth/privateKeyBackup', { data })
+}
+
+// ========== 管理员审核模块 ==========
+
+/** 主管理员审核（发送 EnKey） */
+export const didappSendEnKey = (data: DidappSendEnKeyBody) => {
+    return didappClient.post<null>('/auth/sendEnKey', { data })
 }

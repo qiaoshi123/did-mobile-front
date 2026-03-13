@@ -1,13 +1,6 @@
 ---
 name: create-api
 description: 创建、编写、新增、封装 API 接口。当用户提到以下任意场景时必须使用此技能： 编写API、写接口、创建接口、新增接口、封装API、添加API、对接接口、接入接口、 调用后端接口、根据文档写API、根据接口文档编写、按照API文档实现、 新建服务模块、添加服务模块。 触发关键词包括但不限于：API、api、接口、interface、endpoint、服务端、后端接口、 接口文档、API文档、swagger、请求封装。 只要涉及 HTTP 请求的接口封装工作，都应该触发此技能。
-  创建、编写、新增、封装 API 接口。当用户提到以下任意场景时必须使用此技能：
-  编写API、写接口、创建接口、新增接口、封装API、添加API、对接接口、接入接口、
-  调用后端接口、根据文档写API、根据接口文档编写、按照API文档实现、
-  新建服务模块、添加服务模块。
-  触发关键词包括但不限于：API、api、接口、interface、endpoint、服务端、后端接口、
-  接口文档、API文档、swagger、请求封装。
-  只要涉及 HTTP 请求的接口封装工作，都应该触发此技能。
 allowed-tools: []
 disable: false
 ---
@@ -77,33 +70,11 @@ import type { DidGetUserInfoResult } from '@/http/services/did/api-types'
 
 > **⚠️ 维护要求：** 新增服务时，必须在 `src/http/index.ts` 中添加对应的 `export *` 和 `export type *` 语句。
 
-### 已有服务一览
+### 已有服务 & 网关配置
 
-| 服务名 | 目录 | client 变量名 |
-|--------|------|--------------|
-| did | `services/did/` | `didClient` |
-| did-app | `services/did-app/` | `didappClient` |
-| invoice | `services/invoice/` | `invoiceClient` |
-| tdh | `services/tdh/` | `tdhClient` |
-
-> 各服务的网关、baseUrl 拼接规则、拦截器组合各不相同，具体请查看对应服务的 `client.ts`。
-
-### 网关配置数据源
-
-网关配置的唯一数据源是 `src/config/gateway.json`，包含三部分：
-
-| 字段 | 说明 |
-|------|------|
-| `runtimeEnv` | 当前运行环境（`dev` / `preview` / `production` / `sywl`） |
-| `gatewayName` | 网关名称标识（`app` / `tdh` / `invoice`），H5 环境下作为代理路径前缀 |
-| `gatewayConfig` | 各环境对应的网关真实地址 |
-
-`src/config/index.ts` 从 `gateway.json` 读取并导出 `runtimeEnv`、`GATEWAY_NAME`、`GATEWAY_CONFIG`。
-`vite.config.ts` 同样从 `gateway.json` 读取，动态生成 H5 本地开发反向代理配置。
-
-**切换环境**只需修改 `gateway.json` 中的 `"runtimeEnv"` 字段，client 网关地址和 Vite 代理目标同时联动。
-
-**新增网关**需同时在 `gateway.json` 的 `gatewayName` 和所有环境的 `gatewayConfig` 中添加。
+> 📖 已有服务列表、网关配置详情请参阅 `.codebuddy/rules/05-API规范.md` 中「一、架构总览 → 已有服务」和「二、网关配置」章节，此处不重复列出，以 Rule 为单一数据源。
+>
+> ⚠️ **兜底机制：** 如果执行时发现 `src/http/services/` 下存在 Rule 中未列出的服务目录，请先读取该服务的 `client.ts` 获取 client 变量名、baseUrl 和拦截器配置后再继续。
 
 ### 核心类型速查
 
@@ -217,15 +188,8 @@ export interface <ServicePrefix>XxxItem {
 
 **命名规范（防止跨服务类型名冲突）：**
 - 所有类型名必须加 **服务前缀**：`{ServicePrefix}{Action}{Resource}{Params|Body|Result}`
-- 服务前缀对照表：
-
-| 服务 | 前缀 | 示例 |
-|------|------|------|
-| did | `Did` | `DidGetUserInfoParams` |
-| did-app | `Didapp` | `DidappGetXxxListResult` |
-| invoice | `Invoice` | `InvoiceCreateOrderBody` |
-| tdh | `Tdh` | `TdhQueryFileInfoResult` |
-
+- 服务前缀规则：将服务名转为大驼峰（如 `did` → `Did`，`did-app` → `Didapp`，去掉连字符并首字母大写）
+- 完整前缀对照表见 `.codebuddy/rules/05-API规范.md` 中「3.3 api-types.ts」和「3.6 index.ts」章节
 - Action 常用词：`Get`、`Create`、`Update`、`Delete`、`Query`、`Submit`
 
 #### 第 2 步：定义业务模型（可选） — `model-types.ts`
@@ -322,14 +286,8 @@ export const <servicePrefix>DeleteXxx = (id: string) => {
 
 **函数命名规范（防止跨服务函数名冲突）：**
 - 函数名必须加 **服务前缀**（小驼峰）：`<servicePrefix>{Action}{Resource}`
-- 服务前缀对照表：
-
-| 服务 | 函数前缀 | 示例 |
-|------|---------|------|
-| did | `did` | `didGetUserInfo`、`didCreateDID` |
-| did-app | `didapp` | `didappGetFileList`、`didappSubmitOrder` |
-| invoice | `invoice` | `invoiceCreateOrder`、`invoiceGetDetail` |
-| tdh | `tdh` | `tdhQueryFile`、`tdhCreateAuth` |
+- 服务前缀规则：将服务名转为小驼峰（如 `did` → `did`，`did-app` → `didapp`），与 client 变量名前缀一致
+- 完整前缀对照表见 `.codebuddy/rules/05-API规范.md` 中「3.6 index.ts」章节
 
 **其他编写规范：**
 - 每个 API 函数使用 `export const` + 箭头函数
@@ -363,7 +321,7 @@ export const <serviceName>Errors: Record<number | string, string> = {
 | 信息 | 说明 | 示例 |
 |------|------|------|
 | 服务名称 | 英文小写，用作目录名和 client 变量名 | `did`、`invoice` |
-| 所属网关 | `gateway.json` 中已有的网关名，如需新网关需在 `gatewayName` 和所有环境的 `gatewayConfig` 中补充 | `app`、`tdh`、`invoice` |
+| 所属网关 | 已有网关见 `src/config/gateway.json` 的 `gatewayName` 字段，如需新网关需同步添加 | `app`、`tdh`、`invoice` |
 | API 版本号 | URL 路径中的版本标识 | `v1`、`v10700` |
 | baseUrl 拼接规则 | 网关地址后的 URL 路径拼接方式 | `{gateway}/api/{version}/did` |
 | 是否需要鉴权 | 是否添加 `requestAuthHeaderInterceptor` | 是/否 |
@@ -437,24 +395,8 @@ export { <serviceName>Client }
 - `runtimeEnv` 控制环境切换，不再硬编码 `dev` / `production` 等
 
 > **注意：** 除 `requestCommonHeaderInterceptor` 必选外，其余拦截器均由各服务根据业务需求自行决定是否使用。不使用的拦截器直接删除对应行和 import 即可。
-
-**拦截器选配规则：**
-
-| 拦截器 | 来源 | 何时使用 |
-|--------|------|---------|
-| `requestCommonHeaderInterceptor` | `../../interceptors` | **必加**，所有服务都需要公共请求头 |
-| `requestAuthHeaderInterceptor` | `../../interceptors` | 需要用户登录态的服务添加 |
-| `responseCheckAuthInterceptor` | `../../interceptors` | 需要检查 token 过期/失效的服务添加 |
-| `responseReplaceErrorMsg(errors)` | `../../interceptors` | 可选，需要错误码中文映射时添加 |
-| 服务私有拦截器 | `./interceptors` | 仅当前服务使用的特殊拦截器，按需创建 |
-
-**拦截器放置决策：**
-
-```
-这个拦截器被几个服务使用？
-  ├── 只有 1 个服务 → 放该服务目录下的 interceptors.ts
-  └── 2 个及以上服务 → 放 interceptors/ 目录（每个拦截器独立文件）
-```
+>
+> 📖 拦截器选配规则和放置决策流程见 `.codebuddy/rules/05-API规范.md` 中「3.1 client.ts」章节的拦截器选配表格。
 
 #### 3. `errors.ts` — 初始化错误码映射（使用 `responseReplaceErrorMsg` 时创建）
 

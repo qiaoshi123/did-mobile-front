@@ -56,3 +56,17 @@ export interface DidappPrivateKeyBackupBody {
     /** 接受私钥碎片的电话或者邮箱 */
     phoneOrEmail: string[]
 }
+
+// ========== 主管理员审核（发送 EnKey） ==========
+
+/** 主管理员审核 - 请求体 */
+export interface DidappSendEnKeyBody {
+    /** 审核状态，1表示审核通过，2表示拒绝 */
+    status: number
+    /** 子管理员公钥加密的enkey */
+    enKey: string
+    /** 子管理员公钥标识 */
+    pubKey: string
+    /** 子管理员的手机或者邮箱 */
+    phoneOrEmail: string
+}
