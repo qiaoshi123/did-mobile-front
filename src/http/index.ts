@@ -12,7 +12,7 @@ export * from './core'
 export * from './interceptors'
 
 // ========== 跨服务共享类型 ==========
-export * from './shared-types'
+export type * from './shared-types'
 
 // ========== 各服务 API 函数 ==========
 // 业务层通过此处导入 API 函数，如：import { didGetUserInfo, tdhQueryFile } from '@/http'
