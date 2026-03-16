@@ -20,9 +20,11 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { didappGetHealth } from '@/http'
 import { useCounterStore } from '@/store'
+import { storeToRefs } from 'pinia'
 
 const title = ref('Hello')
 const counter = useCounterStore()
+const {count,doubleCount} = storeToRefs(counter)
 
 onLoad(async () => {
   const res = await didappGetHealth()
@@ -31,8 +33,8 @@ onLoad(async () => {
   }
 
   // 读取
-  console.log(counter.count)       // 0
-  console.log(counter.doubleCount) // 0
+  console.log(count.value)       // 0
+  console.log(doubleCount.value) // 0
 
 })
 </script>
