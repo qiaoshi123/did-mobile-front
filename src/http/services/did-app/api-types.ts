@@ -57,6 +57,20 @@ export interface DidappPrivateKeyBackupBody {
     phoneOrEmail: string[]
 }
 
+// ========== 私钥恢复 ==========
+
+/** 私钥恢复 - 请求体 */
+export interface DidappPrivateKeyRecoveryBody {
+    /** 其中1/3份私钥(base64编码) */
+    priKey: string
+}
+
+/** 私钥恢复 - 响应数据 */
+export interface DidappPrivateKeyRecoveryResult {
+    /** 后端恢复的私钥(base64编码) */
+    privateKey: string
+}
+
 // ========== 主管理员审核（发送 EnKey） ==========
 
 /** 主管理员审核 - 请求体 */
