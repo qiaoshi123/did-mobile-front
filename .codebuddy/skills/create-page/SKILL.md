@@ -214,6 +214,7 @@ onLoad(() => {
 - 禁止在 template 中写复杂逻辑，提取为 `computed` 或方法
 - 样式中颜色、字号、间距优先使用 `var(--td-xxx)` CSS Variables（如 `var(--td-brand-color)`），禁止使用 `$uni-xxx` SCSS 变量，禁止硬编码已有变量的值
 - 底部有固定按钮/操作栏时，必须适配安全区域（`padding-bottom: env(safe-area-inset-bottom)`）
+- **图片资源一律使用占位图**：所有 `<image>` / `<img>` 的 `src` 统一使用 `https://dummyimage.com/{宽}x{高}`（如 `https://dummyimage.com/300x150`），尺寸按设计需要填写。禁止使用本地图片路径或其他占位图服务。图片替换由开发者手动完成，AI 不介入
 
 ---
 

@@ -177,6 +177,7 @@ const emit = defineEmits<Emits>()
 - 状态修饰使用 BEM 的 `--` 连接（`&--modifier`）
 - 嵌套层级不超过 3 层
 - 颜色、字号、间距优先使用 `var(--td-xxx)` CSS Variables
+- **图片资源一律使用占位图**：所有 `<image>` / `<img>` 的 `src` 统一使用 `https://dummyimage.com/{宽}x{高}`（如 `https://dummyimage.com/300x150`），禁止使用本地图片路径。图片替换由开发者手动完成，AI 不介入
 
 ### 复杂 Props（独立 types.ts）
 
