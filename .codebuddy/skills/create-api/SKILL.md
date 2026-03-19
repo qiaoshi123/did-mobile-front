@@ -11,10 +11,9 @@ disable: false
 
 执行此技能前，**必须先读取以下 Rule 文件**，所有生成的代码须严格遵守：
 
-- `.codebuddy/rules/05-API规范.md` — API 架构、服务清单、拦截器、文件职责、类型放置、禁止事项
-- `.codebuddy/rules/02-编码规范.md` — TypeScript 规范、命名约定、格式化规则
+- `.codebuddy/rules/05-API规范.mdc` — API 架构、服务清单、拦截器、文件职责、类型放置、禁止事项
 
-如有冲突，API 领域以 `05-API规范` 为准，通用编码以 `02-编码规范` 为准。
+> 编码规范（TypeScript、命名约定、格式化规则）已作为 always apply rule 自动生效，无需手动读取。
 
 ---
 
@@ -83,6 +82,21 @@ export interface <ServicePrefix>CreateXxxResult {
 }
 ```
 
+**当多个接口的 Result 结构完全一致时**（如登录和创建账号都返回 `{ token, useInfo }`），使用 type alias 引用 `model-types.ts` 中的共用子结构：
+
+```typescript
+// api-types.ts
+import type { <ServicePrefix>AuthResult } from './model-types'
+
+/** 登录 - 响应数据 */
+export type <ServicePrefix>LoginResult = <ServicePrefix>AuthResult
+
+/** 创建账号 - 响应数据 */
+export type <ServicePrefix>CreateUserResult = <ServicePrefix>AuthResult
+```
+
+> ⚠️ **禁止**直接将一个接口的 Result 类型用于另一个接口（如 `LoginResult` 用于 `createUser`），必须各自独立定义。
+
 **命名规范：**
 - 类型名必须加服务前缀：`{ServicePrefix}{Action}{Resource}{Params|Body|Result}`
 - GET 请求参数后缀 `Params`，POST 请求体后缀 `Body`，响应数据后缀 `Result`
@@ -91,7 +105,39 @@ export interface <ServicePrefix>CreateXxxResult {
 
 ### 第 2 步：定义业务模型（可选） — `model-types.ts`
 
-当一个类型被当前服务内 2 个及以上接口引用时，提取到 `model-types.ts`，类型名同样加服务前缀。
+**定位约束：**
+- `model-types.ts` 只存放**与接口无关的独立业务实体**和**被多个接口共用的子结构**
+- **禁止**在 `model-types.ts` 中存放以接口命名的 `XxxResult` / `XxxBody` / `XxxParams` 类型——这些始终留在 `api-types.ts`
+
+**提取时机：**
+- 当一个类型被当前服务内 2 个及以上接口引用时，提取到 `model-types.ts`
+- 类型名同样加服务前缀，使用**业务语义命名**（如 `DidappUserInfo`、`DidappAuthResult`）
+
+**代码模板：**
+
+```typescript
+// src/http/services/<service-name>/model-types.ts
+
+/** 用户基础信息 */
+export interface <ServicePrefix>UserInfo {
+    /** 用户 ID */
+    id: string
+    /** 用户昵称 */
+    nickname: string
+}
+
+/** 鉴权结果（登录、注册等接口共用） */
+export interface <ServicePrefix>AuthResult {
+    /** 访问令牌 */
+    token: string
+    /** 用户信息 */
+    userInfo: <ServicePrefix>UserInfo
+}
+```
+
+**禁止示例：**
+- ❌ `DidappLoginResult` 放在 `model-types.ts`（以接口命名，应留在 `api-types.ts`）
+- ✅ `DidappAuthResult` 放在 `model-types.ts`（业务语义命名，被多个接口共用）
 
 ### 第 3 步：编写 API 函数 — `index.ts`
 
@@ -183,6 +229,9 @@ import { <serviceName>Errors } from './errors'
 /**
  * <服务中文名>服务端
  * 网关：<网关名>
+ * @typePrefix <ServicePrefix> — 类型命名前缀（如 <ServicePrefix>GetXxxParams）
+ * @functionPrefix <servicePrefix> — 函数命名前缀（如 <servicePrefix>GetXxx）
+ * @clientName <serviceName>Client
  */
 const version = '<version>'
 let baseUrl = ''
@@ -252,6 +301,9 @@ if (res.ok) {
 - [ ] 公共参数未被写入类型定义和 API 函数中
 - [ ] 请求参数和响应数据都有完整的 TS 类型定义
 - [ ] 类型名和函数名都加了服务前缀
+- [ ] 每个接口有自己独立命名的 Result 类型（禁止复用另一个接口的 Result）
+- [ ] 多接口结构相同时，共用子结构已提取到 `model-types.ts`，各 Result 通过 type alias 引用
+- [ ] `model-types.ts` 中没有以接口命名的 `XxxResult` / `XxxBody` / `XxxParams` 类型
 - [ ] API 函数有 JSDoc 注释
 - [ ] GET 用 `{ params }`，POST 用 `{ data }`
 - [ ] 泛型传入了正确的响应数据类型

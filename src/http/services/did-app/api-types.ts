@@ -1,6 +1,29 @@
 //接口类型定义文件
 //使用 TS 类型定义 接口的 Params/Body
 
+// ========== 创建企业账号 ==========
+
+import type { DidappAuthResult } from './model-types'
+
+/** 创建企业账号 - 请求体 */
+export interface DidappCreateUserBody {
+    /** 企业名 */
+    userName: string
+    /** 主管理员名称 */
+    adminName: string
+    /** 密码 */
+    password: string
+    /** 邀请码 */
+    invitationCode: string
+    /** 主管理员电话或者邮箱 */
+    phoneOrEmail: string
+    /** 验证码 */
+    authCode: string
+}
+
+/** 创建企业账号 - 响应数据 */
+export type DidappCreateUserResult = DidappAuthResult
+
 // ========== 验证码验证 ==========
 
 /** 验证码验证 - 请求体 */
@@ -13,8 +36,6 @@ export interface DidappAuthCodeVerifyBody {
 
 // ========== 登录 ==========
 
-import type { DidappUserInfo } from './model-types'
-
 /** 登录 - 请求体 */
 export interface DidappLoginBody {
     /** 手机号或者邮箱 */
@@ -24,12 +45,18 @@ export interface DidappLoginBody {
 }
 
 /** 登录 - 响应数据 */
-export interface DidappLoginResult {
-    /** 登录令牌 */
-    token: string
-    /** 用户信息 */
-    useInfo: DidappUserInfo
+export type DidappLoginResult = DidappAuthResult
+
+// ========== 通过code登录 ==========
+
+/** 通过code登录 - 请求体 */
+export interface DidappCodeLoginBody {
+    /** 小程序 wx.login() 获取的临时登录凭证code */
+    code: string
 }
+
+/** 通过code登录 - 响应数据 */
+export type DidappCodeLoginResult = DidappAuthResult
 
 // ========== 获取app后台信息 ==========
 

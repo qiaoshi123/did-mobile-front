@@ -5,9 +5,13 @@ import { tdhErrors } from "./errors";
 
 /**
  * 存证服务端
- * 网关：使用tdh存证网关
- * H5环境baseUrl:"/<gateway名称标识>/tdh/api/<version>"
- * 非H5环境baseUrl规则："<gateway具体信息>/tdh/api/<version>"
+ * 网关：使用 tdh 存证网关
+ * @typePrefix Tdh — 类型命名前缀（如 TdhQueryFileParams、TdhQueryFileResult）
+ * @functionPrefix tdh — 函数命名前缀（如 tdhQueryFile、tdhUploadFile）
+ * @clientName tdhClient
+ * @desc baseUrl 规则：
+ *   - H5 环境：`/<gateway名称标识>/tdh/api/<version>`
+ *   - 非 H5 环境：`<gateway具体信息>/tdh/api/<version>`
  */
 const version = "v1";
 let baseUrl = '';

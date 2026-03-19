@@ -5,9 +5,13 @@ import { invoiceErrors } from "./errors";
 
 /**
  * 发票服务端
- * 网关：使用invoice发票网关
- * H5环境baseUrl: "/<gateway名称标识>/invoice-platform/api/<version>"
- * 非H5环境baseUrl规则："<gateway具体信息>/invoice-platform/api/<version>"
+ * 网关：使用 invoice 发票网关
+ * @typePrefix Invoice — 类型命名前缀（如 InvoiceQueryParams、InvoiceQueryResult）
+ * @functionPrefix invoice — 函数命名前缀（如 invoiceQuery、invoiceCreate）
+ * @clientName invoiceClient
+ * @desc baseUrl 规则：
+ *   - H5 环境：`/<gateway名称标识>/invoice-platform/api/<version>`
+ *   - 非 H5 环境：`<gateway具体信息>/invoice-platform/api/<version>`
  */
 
 const version = "v1";

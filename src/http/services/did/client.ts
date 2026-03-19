@@ -5,10 +5,13 @@ import { didErrors } from "./errors";
 
 /**
  * did 服务端
- * 网关：使用app网关
- * baseUrl规则：
- * H5环境baseUrl:"/<gateway名称标识>/api/<version>/did"
- * 非H5环境baseUrl规则："<gateway具体信息>/api/<version>/did"
+ * 网关：使用 app 网关
+ * @typePrefix Did — 类型命名前缀（如 DidGetInfoParams、DidGetInfoResult）
+ * @functionPrefix did — 函数命名前缀（如 didGetInfo、didCreateUser）
+ * @clientName didClient
+ * @desc baseUrl 规则：
+ *   - H5 环境：`/<gateway名称标识>/api/<version>/did`
+ *   - 非 H5 环境：`<gateway具体信息>/api/<version>/did`
  */
 
 const version = "v1";

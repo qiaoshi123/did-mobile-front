@@ -11,10 +11,9 @@ disable: false
 
 执行此技能前，**必须先读取以下 Rule 文件**，所有生成的代码须严格遵守：
 
-- `.codebuddy/rules/07-状态管理.md` — Store 写法、文件组织、持久化、命名约定、解构规则
-- `.codebuddy/rules/02-编码规范.md` — TypeScript 规范、命名约定
+- `.codebuddy/rules/07-状态管理.mdc` — Store 写法、文件组织、持久化、命名约定、解构规则
 
-如有冲突，Store 领域以 `07-状态管理` 为准，通用编码以 `02-编码规范` 为准。
+> 编码规范（TypeScript、命名约定）已作为 always apply rule 自动生效，无需手动读取。
 
 ---
 

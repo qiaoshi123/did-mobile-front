@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
 description: 项目的目录结构规范，定义了 src 目录下各目录的用途与约束。当需要确定代码应放在哪个目录时读取此规则。
+alwaysApply: false
 ---
 
 # 项目结构
@@ -43,9 +43,12 @@ src/
 
 ## 页面路由约束
 
+> 完整路由规范见 `06-路由规范.mdc`，以下仅为结构层面的基本约束。
+
 - 每个页面必须在 `src/pages.json` 中注册路由
 - 路由 `path` 不以 `/` 开头、不含 `.vue` 后缀
 - `pages` 数组第一项为应用启动页
+- 分包目录放在 `src/` 下与 `pages/` 平级，命名 `pages-sub/<module>`
 
 ## 目录创建原则
 

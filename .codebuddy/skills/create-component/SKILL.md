@@ -11,10 +11,12 @@ disable: false
 
 执行此技能前，**必须先读取以下 Rule 文件**，所有生成的代码须严格遵守：
 
-- `.codebuddy/rules/04-组件规范.md` — 组件分类、目录结构、命名约定、Props/Emits 契约、导出注册要求
-- `.codebuddy/rules/02-编码规范.md` — TypeScript 规范、Vue 3 组件规范、命名约定
+- `.codebuddy/rules/04-组件规范.mdc` — 组件分类、目录结构、命名约定、Props/Emits 契约、导出注册要求
+- `.codebuddy/rules/08-样式规范.mdc` — SCSS 变量、BEM 命名、样式组织、禁止内联样式
 
-如有冲突，组件领域以 `04-组件规范` 为准，通用编码以 `02-编码规范` 为准。
+> 编码规范（TypeScript、Vue 3、命名约定）已作为 always apply rule 自动生效，无需手动读取。
+
+如有冲突，组件领域以 `04-组件规范` 为准，样式领域以 `08-样式规范` 为准。
 
 ## 文档查阅工具
 
@@ -144,10 +146,36 @@ const emit = defineEmits<Emits>()
 
 <style lang="scss" scoped>
 .<component-name> {
-    //
+    // 组件根样式
+
+    // 子元素样式（BEM __element）
+    &__header {
+        //
+    }
+
+    &__content {
+        //
+    }
+
+    // 状态修饰（BEM --modifier）
+    &--active {
+        //
+    }
+
+    &--disabled {
+        //
+    }
 }
 </style>
 ```
+
+### 组件样式模板说明
+
+- 组件根容器 class 固定为 `<component-name>`（和目录名一致）
+- 子元素使用 BEM 的 `__` 连接（`&__element`）
+- 状态修饰使用 BEM 的 `--` 连接（`&--modifier`）
+- 嵌套层级不超过 3 层
+- 颜色、字号、间距优先使用 `var(--td-xxx)` CSS Variables
 
 ### 复杂 Props（独立 types.ts）
 
@@ -231,4 +259,7 @@ export { default as <ComponentName> } from './<component-name>/index.vue'
 - [ ] 如为二次封装 TDesign 组件，已通过 `tdesign-uniapp` Skill 确认原始组件用法
 - [ ] 如为通用组件，已在 `src/components/index.ts` 中导出并附带 JSDoc 注释
 - [ ] 样式使用 `<style lang="scss" scoped>`，无内联样式（动态样式除外）
+- [ ] 样式中颜色/字号/间距优先使用 `var(--td-xxx)` CSS Variables
+- [ ] 组件根 class 与目录名一致，子元素使用 BEM 命名（`&__element`、`&--modifier`）
+- [ ] SCSS 嵌套层级不超过 3 层
 - [ ] 单文件不超过 400 行

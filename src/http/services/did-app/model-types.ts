@@ -1,6 +1,14 @@
 //使用 TS 类型定义 接口使用到的业务模型类型
 // 注意：分页类型（PageParams、PageResult）已迁移到 src/http/shared-types.ts，请从那里引入
 
+/** 鉴权响应结构（登录、创建账号等接口共用） */
+export interface DidappAuthResult {
+    /** 登录令牌 */
+    token: string
+    /** 用户信息 */
+    useInfo: DidappUserInfo
+}
+
 /** 用户信息 */
 export interface DidappUserInfo {
     /** 用户ID */

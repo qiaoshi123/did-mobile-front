@@ -1,0 +1,121 @@
+---
+description: SCSS 样式编写规范，包括变量使用、间距体系、安全区域适配、样式组织方式。当编写页面样式或组件样式时读取此规则。
+alwaysApply: false
+---
+
+# 样式规范
+
+## 预处理器
+
+- 统一使用 SCSS（`<style lang="scss" scoped>`）
+- 禁止使用纯 CSS 或其他预处理器（Less、Stylus）
+- 所有样式必须加 `scoped`（防止样式污染）
+
+## 变量体系
+
+本项目使用 `@tdesign/uniapp` 组件库，样式变量以 **TDesign CSS Variables（`--td-xxx`）** 为唯一真相源。
+
+### 引入方式
+
+TDesign 主题 CSS 已在 `src/main.ts` 中全局引入：
+
+```ts
+import "@tdesign/uniapp/common/style/theme/index.css";
+```
+
+引入后，所有 `--td-xxx` CSS Variables 在任何 `.vue` 文件中均可直接使用。
+
+### 变量使用优先级
+
+1. **TDesign 组件** → 通过组件的 props / slots 控制样式，不要用 CSS 覆盖组件内部
+2. **自定义组件 / 页面样式** → 使用 `var(--td-xxx)` CSS Variables
+3. **`$uni-xxx` SCSS 变量** → **禁止在业务代码中使用**，仅保留供 uni-app 生态第三方插件消费
+
+## 变量使用原则
+
+- **必须使用 `var(--td-xxx)` CSS Variables**，禁止硬编码颜色/间距/圆角等已有变量覆盖的值
+- **禁止在业务代码中使用 `$uni-xxx` SCSS 变量**，它们仅为 uni-app 生态第三方插件保留
+- 如果设计稿的值不在 TDesign 变量范围内，可以直接写具体值，但应在注释中说明设计来源
+
+### 快速示例
+
+```scss
+// ✅ 使用 TDesign CSS Variables
+.my-card {
+    color: var(--td-text-color-primary);
+    background: var(--td-bg-color-container);
+    padding: var(--td-spacer-2);
+}
+
+// ❌ 禁止使用 $uni-xxx SCSS 变量
+// ❌ 禁止硬编码已有变量覆盖的色值（如 color: #333）
+```
+
+## 尺寸单位
+
+| 场景 | 推荐单位 | 说明 |
+|------|---------|------|
+| 常规布局 | `rpx` | uni-app 响应式单位，750rpx = 屏幕宽度 |
+| 字号 | `rpx` 或 `px` | 跟随设计稿，但全局变量中的字号保持 `px` |
+| 边框 | `px` | `1px` 边框不需要响应式 |
+| 行高 | 无单位或 `em` | 如 `line-height: 1.5` |
+
+> 设计稿宽度默认按 750 设计，`1px 设计稿 = 1rpx`。
+
+## 布局方式
+
+- 优先使用 `flex` 布局（`display: flex`）
+- 简单水平/垂直居中用 flex 而不是 position
+- 避免使用 `float`（已过时）
+- 栅格/多列布局优先用 flex，不依赖第三方栅格库
+
+## 样式组织
+
+### 页面样式规则
+
+- 页面根容器 class 固定为 `page-<page-name>`
+- 内部样式使用**嵌套写法**，层级不超过 3 层
+- 区块级 class 使用 kebab-case
+
+### 组件样式规则
+
+- 组件根容器 class 固定为 `<component-name>`（和目录名一致）
+- 子元素使用 BEM 的 `__` 连接（`&__element`）
+- 状态修饰使用 BEM 的 `--` 连接（`&--modifier`）
+- 嵌套层级不超过 3 层
+
+> 具体的样式代码模板参见 `create-page` / `create-component` Skill。
+
+## 安全区域适配
+
+- 底部有固定按钮/操作栏 → 必须使用 `padding-bottom: env(safe-area-inset-bottom)` 适配
+- 使用自定义导航栏（`navigationStyle: custom`）→ 必须使用 `padding-top: var(--status-bar-height)` 适配
+
+## 动态样式
+
+- 动态样式使用 `:style` 绑定，这是唯一允许内联样式的场景
+- 动态 class 使用 `:class` 绑定
+- 优先使用 `:class` 而非 `:style`
+
+```vue
+<!-- ✅ 推荐 -->
+<view :class="{ 'item--active': isActive }" />
+
+<!-- ✅ 必须动态计算时 -->
+<view :style="{ height: `${dynamicHeight}rpx` }" />
+
+<!-- ❌ 禁止静态内联样式 -->
+<view style="color: red; margin: 10px;" />
+```
+
+## 禁止事项
+
+| 序号 | 禁止行为 | 说明 |
+|------|---------|------|
+| 1 | 禁止硬编码已有变量覆盖的颜色值 | 如 `color: #333` 应写 `color: var(--td-text-color-primary)` |
+| 2 | 禁止使用内联样式 | 动态样式用 `:style` 绑定除外 |
+| 3 | 禁止省略 `scoped` | 所有 `<style>` 必须加 `scoped` |
+| 4 | 禁止使用 `!important` | 如发现需要 `!important` 说明选择器设计有问题 |
+| 5 | 禁止 SCSS 嵌套超过 3 层 | 过深嵌套影响可读性和性能 |
+| 6 | 禁止使用 `float` 布局 | 使用 `flex` 替代 |
+| 7 | 禁止使用 `*` 通配选择器 | 影响性能 |

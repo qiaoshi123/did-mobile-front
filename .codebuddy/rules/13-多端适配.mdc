@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
 description: uni-app 多端适配规范，包括条件编译使用规则、平台差异处理方式。当涉及多平台兼容或条件编译时读取此规则。
+alwaysApply: false
 ---
 
 # 多端适配规范

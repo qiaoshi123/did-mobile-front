@@ -11,11 +11,15 @@ disable: false
 
 执行此技能前，**必须先读取以下 Rule 文件**，所有生成的代码须严格遵守：
 
-- `.codebuddy/rules/02-编码规范.md` — TypeScript 规范、Vue 3 组件规范、命名约定
-- `.codebuddy/rules/03-项目结构.md` — 页面目录结构、路由约束
-- `.codebuddy/rules/04-组件规范.md` — 组件选择优先级、TDesign 使用约束、组件创建规范
+- `.codebuddy/rules/03-项目结构.mdc` — 页面目录结构、路由约束
+- `.codebuddy/rules/04-组件规范.mdc` — 组件选择优先级、TDesign 使用约束、组件创建规范
+- `.codebuddy/rules/06-路由规范.mdc` — 路径常量、跳转方式、路由守卫、分包、tabBar 规范
+- `.codebuddy/rules/08-样式规范.mdc` — SCSS 变量、样式组织、安全区域适配、禁止内联样式
+- `.codebuddy/rules/09-工具函数规范.mdc` — 工具函数使用优先级、避免重复编写
 
-如有冲突，页面相关以 `03-项目结构` 为准，组件相关以 `04-组件规范` 为准，通用编码以 `02-编码规范` 为准。
+> 编码规范（TypeScript、Vue 3、命名约定）已作为 always apply rule 自动生效，无需手动读取。
+
+如有冲突，页面相关以 `03-项目结构` 为准，组件相关以 `04-组件规范` 为准，样式相关以 `08-样式规范` 为准。
 
 ## 文档查阅工具
 
@@ -161,18 +165,37 @@ onLoad(() => {
 
 <style lang="scss" scoped>
 .page-<page-name> {
-    //
+    // 页面级通用样式
+
+    // 各区块样式
+    .section-header {
+        //
+    }
+
+    .section-content {
+        //
+    }
 }
 </style>
 ```
+
+### 页面样式模板说明
+
+- 页面根容器 class 固定为 `page-<page-name>`
+- 内部区块用嵌套写法，区块级 class 使用 kebab-case
+- 嵌套层级不超过 3 层
+- 颜色、字号、间距优先使用 `var(--td-xxx)` CSS Variables
 
 **编写规范：**
 - SFC 结构顺序：`<template>` → `<script setup lang="ts">` → `<style lang="scss" scoped>`
 - 页面生命周期使用 `onLoad`、`onShow` 等（从 `@dcloudio/uni-app` 导入）
 - Store 从 `@/store` 导入，解构 state/getters 时必须使用 `storeToRefs()`
 - API 从 `@/http` 导入
+- 工具函数从 `@/utils` 导入（如 `formatDate`、`router` 等），禁止在页面内重复编写已有工具函数
 - template 根元素 class 命名：`page-<page-name>`
 - 禁止在 template 中写复杂逻辑，提取为 `computed` 或方法
+- 样式中颜色、字号、间距优先使用 `var(--td-xxx)` CSS Variables（如 `var(--td-brand-color)`），禁止使用 `$uni-xxx` SCSS 变量，禁止硬编码已有变量的值
+- 底部有固定按钮/操作栏时，必须适配安全区域（`padding-bottom: env(safe-area-inset-bottom)`）
 
 ---
 
@@ -189,3 +212,7 @@ onLoad(() => {
 - [ ] Store 的 state/getters 解构使用了 `storeToRefs()`
 - [ ] 所有代码符合 TypeScript 规范，无 `any` 类型
 - [ ] 页面级组件放在 `src/pages/<page-name>/components/` 下
+- [ ] 工具函数从 `@/utils` 导入，未在页面内重复编写已有工具逻辑
+- [ ] 样式中颜色/字号/间距优先使用 `var(--td-xxx)` CSS Variables，无硬编码已有变量的值
+- [ ] 样式使用 SCSS 嵌套，层级不超过 3 层
+- [ ] 如有底部固定区域，已适配 `safe-area-inset-bottom`

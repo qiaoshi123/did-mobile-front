@@ -1,0 +1,63 @@
+---
+description: 路由与导航规范，包括 pages.json 配置约束、路由跳转、路径常量、路由守卫、分包策略、tabBar 规范。当新增页面、配置路由、编写页面跳转逻辑时读取此规则。
+alwaysApply: false
+---
+
+# 路由规范
+
+## 路径常量
+
+- 所有页面路径在 `src/constants/routes.ts` 中定义，禁止硬编码路径字符串
+- 常量命名：主包 `PAGE_` 前缀，分包 `PAGE_SUB_` 前缀，UPPER_SNAKE_CASE
+- 路径值以 `/` 开头（用于跳转 API 的 url 参数）
+- 新增页面时必须同步添加对应常量
+
+## pages.json 约束
+
+- `path` 不以 `/` 开头、不含 `.vue` 后缀
+- `pages` 数组第一项为应用启动页
+- 页面 `style` 只配置需要覆盖 `globalStyle` 的属性，不重复声明默认值
+
+## tabBar 约束
+
+- 页面数量：最少 2 个，最多 5 个
+- icon 放 `src/static/icons/`，命名 `<name>.png` / `<name>-active.png`，尺寸 81×81 px
+- tabBar 页面只能通过 `router.toTab()` 跳转
+
+## 分包约束
+
+- 主包只放核心页面（tabBar 页面、启动页、登录页等）
+- 非核心页面按模块归入分包，目录 `src/pages-sub/<module>/`，命名 kebab-case
+- 预下载（preloadRule）优先 `"network": "wifi"`
+
+## 跳转方式选择
+
+| `router` 方法 | 对应 API | 场景 |
+|--------------|----------|------|
+| `router.to()` | `navigateTo` | 普通页面跳转（保留当前页入栈） |
+| `router.toTab()` | `switchTab` | 跳转 tabBar 页面 |
+| `router.replace()` | `redirectTo` | 替换当前页（如登录成功后跳首页） |
+| `router.relaunch()` | `reLaunch` | 重置应用状态（如切换账号） |
+| `router.back()` | `navigateBack` | 返回上一页 |
+
+## 路由工具函数
+
+- 所有跳转必须通过 `src/utils/route.ts` 的 `router` 对象，禁止直接调用 `uni.navigateTo` 等原生 API
+- 传参通过 `router.to(PAGE_XXX, { id: '123' })`，接收在 `onLoad(options)` 中做类型断言和空值检查
+- 禁止通过全局状态传递页面间参数（除非数据量极大或是共享状态）
+
+## 路由守卫
+
+- 守卫逻辑在 `src/utils/route-guard.ts` 中管理，`main.ts` 中调用 `setupRouteGuard()` 注册
+- 使用 `uni.addInterceptor` 拦截路由跳转，全端支持（App / H5 / 小程序）
+- 拦截 `navigateTo`、`redirectTo`、`reLaunch`、`switchTab` 四种跳转方式
+- **小程序端限制**：用户点击底部 tabBar 不触发 `uni.switchTab`，拦截器无效；tabBar 页面须在 `onShow` 中兜底校验权限
+- 白名单使用路径常量，不硬编码
+
+## 禁止事项
+
+1. 禁止硬编码页面路径 — 必须使用路径常量
+2. 禁止直接调用 `uni.navigateTo` 等原生 API — 必须使用 `router` 工具函数
+3. 禁止循环跳转（A→B→A 无限循环）
+4. 禁止 `navigateTo` 跳转 tabBar 页面 — 只能用 `router.toTab()`
+5. 禁止页面栈超过 10 层 — 深层级流程用 `router.replace()` 替换而非堆叠

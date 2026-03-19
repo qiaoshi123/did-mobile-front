@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
 description: HTTP 请求模块的架构与 API 封装规范。当需要新增 API、新建服务、修改拦截器时读取此规则。
+alwaysApply: false
 ---
 
 # API 规范
@@ -25,20 +25,22 @@ src/http/
         └── interceptors.ts # 服务私有拦截器（可选）
 ```
 
-## 核心层关键设计
+## 核心层约束
 
-- `ApiRequest` 类基于 `uni.request` 封装，构造时注入 `baseUrl`、`timeout`、`successCodes`、请求/响应拦截器数组
-- `CoreResponse<T>` 统一响应结构：`{ code, data, msg, ok }`，`ok` 由引擎根据 `successCodes` 自动设置
-- `successCodes` 默认为 `[200000]`，如服务成功码不同需在 `client.ts` 中显式指定
+- `core/` 目录为请求引擎层，**禁止修改**
+- 统一响应结构 `CoreResponse<T>` 包含 `{ code, data, msg, ok }` 字段
+- `successCodes` 默认 `[200000]`，不同则需在 `client.ts` 中显式指定
+
+> 核心层的具体 API 用法（构造参数、拦截器注入方式等）参见 `create-api` Skill。
 
 ## 已有服务
 
-| 服务 | 目录 | client 变量 | 类型前缀 | 函数前缀 |
-|------|------|------------|---------|---------|
-| DID 身份服务 | `services/did/` | `didClient` | `Did` | `did` |
-| DID App 服务 | `services/did-app/` | `didappClient` | `Didapp` | `didapp` |
-| 发票服务 | `services/invoice/` | `invoiceClient` | `Invoice` | `invoice` |
-| 存证服务 | `services/tdh/` | `tdhClient` | `Tdh` | `tdh` |
+> ⚠️ **此处不硬编码服务列表，以免与代码不同步。**
+>
+> 查看当前有哪些服务 → **读取 `src/http/services/` 目录结构** + **`src/http/index.ts` 的导出列表**。
+> 每个服务目录下的 `client.ts` 包含 client 变量名和配置，`index.ts` 包含 API 函数列表。
+>
+> **每个 `client.ts` 的 JSDoc 必须包含 `@typePrefix` 和 `@functionPrefix` 标注**，用于告知新增 API 时的命名前缀。
 
 ## 拦截器规范
 
@@ -50,31 +52,24 @@ src/http/
 
 ### 公共拦截器一览
 
-| 拦截器 | 类型 | 必选/可选 | 说明 |
-|--------|------|----------|------|
-| `requestCommonHeaderInterceptor` | 请求 | **必选** | 添加公共请求头参数 |
-| `requestAuthHeaderInterceptor` | 请求 | 可选 | 添加用户登录态 token |
-| `responseCheckAuthInterceptor` | 响应 | 可选 | 检查 token 过期/失效 |
-| `responseReplaceErrorMsg(errors)` | 响应（工厂） | 可选 | 接收错误码映射表，替换 msg 为中文 |
+> ⚠️ **此处不硬编码拦截器列表，以免与代码不同步。**
+>
+> 查看当前有哪些公共拦截器 → **读取 `src/http/interceptors/index.ts`**。
+> 该文件统一导出所有公共拦截器，每个拦截器的函数签名和 JSDoc 注释即是其用法说明。
 
 ### 新增拦截器命名
 
 - 请求拦截器文件名以 `request-` 开头，响应拦截器以 `response-` 开头
 - 文件名 kebab-case，必须在 `interceptors/index.ts` 中导出
+- **新增/修改拦截器时，必须在 `interceptors/index.ts` 的导出语句上方附带 JSDoc**，说明拦截器类型（请求/响应）、是否必选/可选、功能概述、特殊调用方式（如工厂函数）
 
 ## 网关配置
 
-- 唯一数据源：`src/config/gateway.json`，包含 `runtimeEnv`、`gatewayName`、`gatewayConfig`
-- `src/config/index.ts` 导出 `runtimeEnv`、`GATEWAY_NAME`、`GATEWAY_CONFIG`
-- `vite.config.ts` 同样读取 `gateway.json` 生成 H5 开发环境反向代理配置
-- 切换环境只需修改 `gateway.json` 的 `runtimeEnv` 字段
+- 唯一数据源：`src/config/gateway.json`
+- 切换环境只需修改 `gateway.json` 的 `runtimeEnv` 字段，禁止硬编码网关地址
+- `client.ts` 中必须使用 uni-app 条件编译区分 H5 / 非 H5 的 baseUrl
 
-### H5 跨域方案
-
-所有服务的 `client.ts` 使用 uni-app 条件编译区分 baseUrl：
-
-- **H5**（`#ifdef H5`）：相对路径 `/${GATEWAY_NAME.xxx}/...`，由 Vite proxy 或 Nginx 转发
-- **非 H5**（`#ifndef H5`）：绝对路径 `${GATEWAY_CONFIG[runtimeEnv][GATEWAY_NAME.xxx]}/...` 直连
+> 具体的 `client.ts` 编写模板和条件编译写法参见 `create-api` Skill。
 
 ## 命名契约
 
@@ -91,6 +86,8 @@ src/http/
 
 ## 类型放置规则
 
+### 基本放置规则
+
 | 使用范围 | 放置位置 | 是否加服务前缀 |
 |---------|---------|--------------|
 | 仅 1 个接口 | 该服务 `api-types.ts` | 是 |
@@ -98,6 +95,19 @@ src/http/
 | ≥ 2 个服务共用 | `shared-types.ts` | 否 |
 
 当类型使用范围扩大时，按上述规则提升位置。
+
+### `model-types.ts` 定位约束
+
+`model-types.ts` 只存放**与接口无关的独立业务实体**和**被多个接口共用的子结构**（如 `DidappUserInfo`、`DidappAuthResult`），**不存放**以接口命名的 `XxxResult` / `XxxBody` / `XxxParams` 类型——这些类型语义上绑定了特定接口，始终留在 `api-types.ts`。
+
+### 多接口响应结构相同时的处理
+
+- **禁止**直接复用另一个接口的 Result 类型（如 `DidappLoginResult` 直接用于 `createUser` 接口）
+- 共用的子结构**必须**提取到 `model-types.ts`，用**业务语义命名**（如 `DidappAuthResult`），禁止用接口名命名
+- 各接口**必须**在 `api-types.ts` 中独立定义自己的 Result（可通过 `type alias` 引用共用模型）
+- 目的：语义清晰（看类型名即知对应哪个接口）、独立演化（未来结构分化时只需将 type alias 改为独立 interface）
+
+> 具体的代码模板和操作步骤参见 `create-api` Skill。
 
 ## 统一导出（`http/index.ts`）
 

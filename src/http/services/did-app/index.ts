@@ -1,8 +1,18 @@
-import { didappClient } from "./client";
+/**
+ * did-app 服务 API 函数聚合
+ * @desc 所有 did-app 服务的 API 函数在此编写和导出
+ *       函数命名前缀：didapp（如 didappLogin、didappGetUserInfo）
+ *       类型命名前缀：Didapp（如 DidappLoginBody、DidappLoginResult）
+ */
+import { didappClient } from './client'
 import type {
+    DidappCreateUserBody,
+    DidappCreateUserResult,
     DidappAuthCodeVerifyBody,
     DidappLoginBody,
     DidappLoginResult,
+    DidappCodeLoginBody,
+    DidappCodeLoginResult,
     DidappGetHealthResult,
     DidappPrivateKeyBackupBody,
     DidappPrivateKeyRecoveryBody,
@@ -10,6 +20,13 @@ import type {
     DidappSendEnKeyBody,
 } from './api-types'
 import type { DidappUserInfo } from './model-types'
+
+// ========== 账号模块 ==========
+
+/** 创建企业账号 */
+export const didappCreateUser = (data: DidappCreateUserBody) => {
+    return didappClient.post<DidappCreateUserResult>('/login/createUser', { data })
+}
 
 // ========== 登录模块 ==========
 
@@ -21,6 +38,11 @@ export const didappAuthCodeVerify = (data: DidappAuthCodeVerifyBody) => {
 /** 登录 */
 export const didappLogin = (data: DidappLoginBody) => {
     return didappClient.post<DidappLoginResult>('/login/login', { data })
+}
+
+/** 通过code登录（小程序 wx.login 凭证） */
+export const didappCodeLogin = (data: DidappCodeLoginBody) => {
+    return didappClient.post<DidappCodeLoginResult>('/login/codeLogin', { data })
 }
 
 // ========== 用户模块 ==========
