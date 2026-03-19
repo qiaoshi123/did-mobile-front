@@ -13,6 +13,7 @@ disable: false
 
 - `.codebuddy/rules/04-组件规范.mdc` — 组件分类、目录结构、命名约定、Props/Emits 契约、导出注册要求
 - `.codebuddy/rules/08-样式规范.mdc` — SCSS 变量、BEM 命名、样式组织、禁止内联样式
+- `.codebuddy/rules/10-Hooks规范.mdc` — 如组件内部需要可复用的有状态逻辑，优先使用 `@/hooks` 已有 Hook
 
 > 编码规范（TypeScript、Vue 3、命名约定）已作为 always apply rule 自动生效，无需手动读取。
 
@@ -263,3 +264,4 @@ export { default as <ComponentName> } from './<component-name>/index.vue'
 - [ ] 组件根 class 与目录名一致，子元素使用 BEM 命名（`&__element`、`&--modifier`）
 - [ ] SCSS 嵌套层级不超过 3 层
 - [ ] 单文件不超过 400 行
+- [ ] 如组件内使用了有状态逻辑，已检查 `@/hooks` 是否已有可复用的 Hook

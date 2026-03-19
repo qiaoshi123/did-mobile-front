@@ -79,7 +79,7 @@ alwaysApply: false
 | 被 2 个及以上页面/组件使用的工具逻辑 | 仅当前页面使用的辅助方法（放在页面文件内） |
 | 对 uni-app API 的统一封装（如 Storage、路由） | 业务逻辑处理（放在 Store 或页面中） |
 | 纯计算/转换/校验函数 | API 请求相关（放在 `src/http/`） |
-| 防抖、节流等通用高阶函数 | 组件相关的逻辑（放在组件内或 composables） |
+| 防抖、节流等通用高阶函数 | 使用了 `ref`/`computed`/`watch` 等 Vue 响应式 API 的有状态逻辑（放在 `src/hooks/`，详见 `10-Hooks规范`） |
 
 ## 新增文件时机
 

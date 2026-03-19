@@ -13,8 +13,9 @@ src/
 ├── http/          # HTTP 请求模块（core + interceptors + services 三层架构）
 ├── pages/         # 页面目录（uni-app 路由页面）
 ├── components/    # 通用组件（跨页面复用）
+├── hooks/         # 可复用的有状态组合函数（Composables）
 ├── store/         # Pinia Store，按业务拆分
-├── utils/         # 通用工具函数
+├── utils/         # 通用工具函数（无状态纯函数）
 ├── constants/     # 业务常量、枚举
 ├── types/         # 全局类型定义（非 API 相关）
 ├── static/        # 静态资源（图片、图标）
@@ -29,8 +30,9 @@ src/
 | HTTP | `src/http/` | 三层架构（core + interceptors + services） |
 | 页面 | `src/pages/` | 每个页面一个目录，目录名 kebab-case，主文件固定 `index.vue` |
 | 组件 | `src/components/` | 可复用的UI组件 |
+| Hooks | `src/hooks/` | 可复用的有状态组合函数（Composables），`useXxx` 命名，统一导出到 `index.ts`。详见 `10-Hooks规范.mdc` |
 | 状态 | `src/store/` | 按业务模块划分，暴露 `useXxxStore` Hook，统一导出到 `index.ts` |
-| 工具 | `src/utils/` | 按功能模块划分，统一导出到 `index.ts` |
+| 工具 | `src/utils/` | 按功能模块划分，无状态纯函数，统一导出到 `index.ts` |
 | 常量 | `src/constants/` | UPPER_SNAKE_CASE 命名，统一导出到 `index.ts` |
 | 类型 | `src/types/` | 非 API 相关的全局业务类型（API 类型放在 `http/services/` 下） |
 | 静态资源 | `src/static/` | 图片放 `images/`，图标放 `icons/`，文件名 kebab-case |

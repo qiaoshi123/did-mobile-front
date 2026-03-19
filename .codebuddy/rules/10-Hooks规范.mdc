@@ -1,0 +1,98 @@
+---
+description: Composables（Hooks）编写规范，包括命名约定、文件组织、提取时机、与 utils/store 的边界划分。当编写页面/组件需要可复用的有状态逻辑时读取此规则。
+alwaysApply: false
+---
+
+# Hooks 规范（Composables）
+
+## 定位
+
+`src/hooks/` 存放 **可复用的有状态组合函数**（Vue 3 Composables）。与 `utils` 和 `store` 的区别：
+
+| 目录 | 定位 | 特征 |
+|------|------|------|
+| `src/hooks/` | 可复用的有状态逻辑 | 内部使用 `ref`/`computed`/`watch`/生命周期等 Vue 响应式 API |
+| `src/utils/` | 无状态的纯工具函数 | 不依赖 Vue 响应式系统，输入 → 输出 |
+| `src/store/` | 全局共享状态 | 跨页面/组件共享的持久化数据 |
+
+**简单判断：**
+- 函数内部用了 `ref()` / `reactive()` / `computed()` / `watch()` / `onMounted()` → 放 `hooks/`
+- 函数是纯计算/转换/校验，无 Vue API 依赖 → 放 `utils/`
+- 状态需要跨页面/组件共享 → 放 `store/`
+
+## 目录结构
+
+```
+src/hooks/
+├── index.ts              # 统一导出（必须）
+├── use-loading.ts        # 加载态管理
+├── use-pagination.ts     # 分页列表逻辑
+├── use-form-validation.ts # 表单校验
+└── ...                   # 其他按功能命名
+```
+
+- 一个 Hook 对应一个文件
+- 文件名使用 kebab-case，必须以 `use-` 开头
+- 所有文件通过 `index.ts` 统一导出
+
+## 命名规范
+
+| 项目 | 规则 | 示例 |
+|------|------|------|
+| 文件名 | `use-xxx.ts`（kebab-case） | `use-loading.ts`、`use-pagination.ts` |
+| 函数名 | `useXxx`（camelCase，`use` 开头） | `useLoading()`、`usePagination()` |
+| 返回值 | 解构导出，变量/方法名清晰 | `{ loading, startLoading, stopLoading }` |
+| 类型名 | `UseXxxOptions`（入参）、`UseXxxReturn`（返回值） | `UsePaginationOptions`、`UsePaginationReturn` |
+
+## 编写规范
+
+### 函数签名
+
+- 入参使用 `Options` 接口定义，支持可选配置
+- 返回值使用具名对象，禁止返回数组（数组不利于可读性和按需解构）
+- 必须有完整的 JSDoc 注释
+
+### 导出方式
+
+- 使用 `export const` + 箭头函数
+- 每个函数独立导出（具名导出），禁止 `export default`
+- 在 `src/hooks/index.ts` 中统一再导出
+- `index.ts` 的每组 re-export 必须有分组注释和功能说明
+
+### 业务层使用
+
+```typescript
+// ✅ 从统一入口导入
+import { useLoading, usePagination } from '@/hooks'
+
+// ❌ 禁止直接从具体文件导入
+import { useLoading } from '@/hooks/use-loading'
+```
+
+## 提取时机
+
+| 应该提取为 Hook | 不应该提取为 Hook |
+|---------------|-----------------|
+| 2 个及以上页面/组件使用相同的有状态逻辑 | 仅当前页面使用的临时逻辑（放在页面文件内） |
+| 逻辑复杂度高，提取后能显著降低页面代码量 | 一两行的简单 ref 声明 |
+| 具有通用性的模式（加载态、分页、表单校验等） | 强耦合某个具体业务的逻辑（放 Store 或页面内） |
+| 需要封装 uni-app API 的响应式包装 | 无状态的纯计算函数（放 `utils/`） |
+
+## 与 Store 的边界
+
+- Hook 管理的是**组件/页面级别的局部状态**，每次调用产生独立实例
+- Store 管理的是**全局共享状态**，所有调用方共享同一份数据
+- Hook 内部可以调用 Store（如 `useAuth` 内部读取 `useUserStore`）
+- 禁止在 Hook 内部直接修改其他页面的状态
+
+## 禁止事项
+
+| 序号 | 禁止行为 | 说明 |
+|------|---------|------|
+| 1 | 禁止在页面/组件中重复编写已有的 Hook 逻辑 | 检查 `@/hooks` 是否已有 |
+| 2 | 禁止直接从具体文件导入 | 统一从 `@/hooks` 导入 |
+| 3 | 禁止使用 `export default` | 统一使用具名导出 |
+| 4 | 禁止函数缺少类型和 JSDoc | 入参、返回值必须有类型，函数必须有注释 |
+| 5 | 禁止在 hooks 中存放无状态的纯工具函数 | 无状态函数放 `utils/` |
+| 6 | 禁止新增 Hook 不更新 `index.ts` | 每次新增都必须同步更新统一导出 |
+| 7 | 禁止 Hook 返回数组 | 统一返回具名对象，提高可读性 |
