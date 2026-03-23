@@ -67,9 +67,10 @@ export class ApiRequest {
             params: options?.params ?? {},
             data: options?.data ?? {},
         }
-        for (const interceptor of this.requestInterceptors) {
-            finalOptions = await interceptor(finalOptions);
+        for (let i = 0; i < this.requestInterceptors.length; i++) {
+            finalOptions = await this.requestInterceptors[i](finalOptions);
         }
+
         if (finalOptions.loading) {
             uni.showLoading({ title: finalOptions.loadingText, mask: false })
         }
@@ -78,7 +79,7 @@ export class ApiRequest {
                 url: this.baseUrl + url,
                 method,
                 header: finalOptions.header,
-                data: finalOptions.params || finalOptions.data,
+                data: finalOptions.data,
                 timeout: finalOptions.timeout,
             })
             if (finalOptions.loading) {
