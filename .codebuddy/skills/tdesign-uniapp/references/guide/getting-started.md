@@ -1,0 +1,198 @@
+---
+name: "getting-started"
+description: "TDesign UniApp 组件库。"
+url: "https://tdesign.tencent.com/uniapp/getting-started"
+---
+
+## 预览
+
+扫码查看 ↓
+
+
+> 其他平台同样支持，仅因平台审核等原因未能上架预览，不影响组件库正常使用。
+
+## 安装
+
+### NPM 方式
+
+```bash
+npm i @tdesign/uniapp
+```
+
+### UNI_MODULES 方式
+
+已上传 [插件](https://ext.dcloud.net.cn/plugin?name=tdesign-uniapp) 到 DCloud 插件市场，请打开插件详情页并点击`使用 HBuilderX 导入插件`。
+
+## 使用
+
+1. 在 `main.ts` 中引入样式文件
+
+```js
+// CLI 模式
+import '@tdesign/uniapp/common/style/theme/index.css';
+
+// HBuilderX 模式
+// import './uni_modules/tdesign-uniapp/components/common/style/theme/index.css';
+```
+
+也可以引入 `rpx` 单位的 `less` 文件，该文件与 `tdesign-miniprogram` 完全一致。
+
+```js
+// CLI 模式
+import '@tdesign/uniapp/common/style/theme/index.less';
+
+// HBuilderX 模式
+// import './uni_modules/tdesign-uniapp/components/common/style/theme/index.less';
+```
+
+2. 在文件中使用
+
+```html
+<template>
+  <t-loading />
+</template>
+
+<script lang="ts" setup>
+import TLoading from '@tdesign/uniapp/loading/loading.vue';
+</script>
+```
+
+只提供按需导入方式，不支持全量导入（全量导入在小程序下有兼容性问题）。
+
+## 自动导入
+
+在 `pages.json` 配置 [easycom](https://uniapp.dcloud.net.cn/collocation/pages.html#easycom)，可实现自动导入。
+
+### CLI 模式
+
+使用 CLI 模式，即使用 `node_modules` 下的 `@tdesign/uniapp` 时，配置如下。
+
+```json
+{
+  "easycom": {
+    "custom": {
+      "^t-(.*)": "@tdesign/uniapp/$1/$1.vue"
+    }
+  }
+}
+```
+
+### UNI_MODULES 模式
+
+使用 `uni_modules` 下的 `tdesign-uniapp` 时，配置如下。
+
+```json
+{
+  "easycom": {
+    "custom": {
+      "^t-(.*)": "@/uni_modules/tdesign-uniapp/components/$1/$1.vue"
+    }
+  }
+}
+```
+
+### Vite 配置
+
+也可以通过 [@uni-helper/vite-plugin-uni-components](https://github.com/uni-helper/vite-plugin-uni-components) 实现组件的自动引入。
+
+```js
+// vite.config.ts
+import { defineConfig } from "vite";
+import uni from "@dcloudio/vite-plugin-uni";
+
+import Components from '@uni-helper/vite-plugin-uni-components'
+import { TDesignUniappResolver } from '@uni-helper/vite-plugin-uni-components/resolvers'
+
+
+export default defineConfig({
+  plugins: [
+    Components({
+      resolvers: [TDesignUniappResolver()]
+    }),
+    uni(),
+  ],
+});
+```
+
+## 编辑器提示
+
+安装注册 TDesign 之后，在开发项目时，可以配合插件在VSCode等主流编辑器中达到提示组件名及API的效果。
+
+推荐安装 [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) 插件，并在项目的 `tsconfig.json` 的 `compilerOptions.types` 属性中增加 `@tdesign/uniapp/global`，即可实现提示效果。
+
+```json
+{
+  "compilerOptions": {
+    "types": [
+      "@tdesign/uniapp/global",
+    ]
+  }
+}
+```
+
+## 平台兼容性
+
+| 平台         | Vue2 | Vue3 | H5  | Android | iOS | App-nvue | 微信小程序 | QQ小程序 |
+| ------------ | ---- | ---- | --- | ------- | --- | -------- | ---------- | -------- |
+| **支持情况** | ✅    | ✅    | ✅   | ✅       | ✅   | ⚠️        | ✅          | ✅        |
+
+| 平台         | 支付宝小程序 | 抖音小程序 | 百度小程序 | 快手小程序 | 小红书小程序 | 京东小程序 |
+| ------------ | ------------ | ---------- | ---------- | ---------- | ------------ | ---------- |
+| **支持情况** | ✅            | ✅          | ✅          | ✅          | ✅            | ✅          |
+
+## 浏览器兼容性
+
+| [](http://godban.github.io/browsers-support-badges/)
+Firefox | [](http://godban.github.io/browsers-support-badges/)
+Chrome | [](http://godban.github.io/browsers-support-badges/)
+ iOS Safari| [](http://godban.github.io/browsers-support-badges/)
+Samsung | [](http://godban.github.io/browsers-support-badges/)
+Opera |
+Android Browser|
+| --------- | --------- | --------- | --------- | --------- |--------- |
+| Firefox >=104| Chrome >=105| iOS Safari >=12.2| Samsung >=10.2 | Opera >=64 | Android Browser >=105 |
+
+详情参见[移动端组件库浏览器兼容性说明](https://github.com/Tencent/tdesign/wiki/Browser-Compatibility)
+
+## 模板项目
+
+我们提供了多种开箱即用的模板项目，帮助你快速开始开发。
+
+| 模板 | 描述 | 预览 |
+| --- | --- | --- |
+| [TDesign UniApp Starter](https://github.com/TDesignOteam/tdesign-uniapp-starter/) | Vue3 + CLI 模式模板 - 通用类 |  |
+| [TDesign UniApp Starter Apply](https://github.com/TDesignOteam/tdesign-uniapp-starter-apply/) | Vue3 + CLI 模式模板 - 活动报名 |  |
+| [TDesign UniApp Starter Vue3 HX](https://github.com/TDesignOteam/tdesign-uniapp-starter-vue3-hx/) | Vue3 + HBuilderX 模式模板 |  |
+| [TDesign UniApp Starter Vue2 CLI](https://github.com/TDesignOteam/tdesign-uniapp-starter-vue2-cli/) | Vue2 + CLI 模式模板 |  |
+| [TDesign UniApp Starter Vue2 HX](https://github.com/TDesignOteam/tdesign-uniapp-starter-vue2-hx/) | Vue2 + HBuilderX 模式模板 | |
+
+## 开发
+
+```bash
+# 安装项目依赖
+pnpm install
+
+# H5
+npm run uniapp -- run dev:h5
+
+# 其他平台类似，比如微信小程序
+npm run uniapp -- run dev:mp-weixin
+
+# uniapp-chat 项目开发
+npm run uniapp:chat -- run site:dev
+```
+
+打开[微信开发者工具](https://mp.weixin.qq.com/debug/wxadoc/dev/devtools/download.html)，把 `packages/tdesign-uniapp/example/dist/build/mp-weixin` 目录添加进去就可以预览示例了。
+
+## 小程序基础库版本
+
+- 微信小程序：最低基础库版本`^2.12.0`
+
+### 组件与微信小程序基础库版本对应关系
+
+| 组件   | API | 最低基础库 | 描述 |
+| -- | -- | -- | -- |
+| Upload | [wx.previewMedia](https://developers.weixin.qq.com/miniprogram/dev/api/media/image/wx.previewMedia.html)                                   | 2.12.0     | -    |
+| Upload | [wx.chooseMedia](https://developers.weixin.qq.com/miniprogram/dev/api/media/video/wx.chooseMedia.html)                                     | 2.10.0     | -    |
+| Upload | [wx.chooseMessageFile](https://developers.weixin.qq.com/miniprogram/dev/api/media/image/wx.chooseMessageFile.html)                         | 2.5.0      | -    |
+| Navbar | [wx.getMenuButtonBoundingClientRect](https://developers.weixin.qq.com/miniprogram/dev/api/ui/menu/wx.getMenuButtonBoundingClientRect.html) | 2.1.0      | -    |

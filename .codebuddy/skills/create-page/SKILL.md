@@ -36,9 +36,10 @@ disable: false
 
 ## 文档查阅工具
 
-- 使用 **TDesign 组件**时 → 查阅 `tdesign-uniapp` Skill 确认 Props/Events/Slots
+- 使用 **TDesign 组件**时 → **必须逐个查阅** `tdesign-uniapp` Skill 中对应组件的文档，确认 Props/Events/Slots 的**实际 API**（如值绑定方式是 `v-model` 还是 `:value` + `@change`），**禁止凭经验假设组件 API**
 - 使用 **uni-app 内置组件**（`<view>`/`<scroll-view>`/`<swiper>` 等）或 **uni API**（`uni.navigateTo`/`uni.showToast`/`onLoad` 等）时 → 使用 `uni-doc` MCP 工具（`search-docs-by-Uniapp-official`）搜索官方文档，确认用法、参数和平台兼容性
 
+> ⚠️ **TDesign UniApp 组件的 API 可能与标准 Vue 组件不同**（例如部分组件不支持 `v-model`，需要用 `:value` + `@change` 受控模式）。编写每个 TDesign 组件代码前，**必须先读取该组件的 Skill 文档（`.codebuddy/skills/tdesign-uniapp/references/components/<组件名>.md`）确认实际 API**，不可想当然地套用 Vue 标准写法。
 > ⚠️ 遇到不确定的 uni-app 用法时，**必须先通过 `uni-doc` 查阅官方文档再编写代码**，禁止凭记忆猜测。
 
 ---
@@ -216,6 +217,42 @@ onLoad(() => {
 - 底部有固定按钮/操作栏时，必须适配安全区域（`padding-bottom: env(safe-area-inset-bottom)`）
 - **图片资源一律使用占位图**：所有 `<image>` / `<img>` 的 `src` 统一使用 `https://dummyimage.com/{宽}x{高}`（如 `https://dummyimage.com/300x150`），尺寸按设计需要填写。禁止使用本地图片路径或其他占位图服务。图片替换由开发者手动完成，AI 不介入
 
+**API 调用规范（强制）：**
+- 编写 API 调用代码前，**必须先读取 `src/http/core/types.ts`**，确认 `CoreResponse` 的结构（`{ code, data, msg, ok }`）
+- 本项目的 HTTP 封装 Promise **永远 resolve**（不会 reject），所以**禁止使用 try/catch 包裹 API 调用**
+- 使用 `if (res.ok)` 判断请求是否成功，失败时使用 `res.msg` 提示用户
+- 正确示例：
+  ```typescript
+  const res = await didappLogin(formData)
+  if (res.ok) {
+      // 成功逻辑
+  } else {
+      uni.showToast({ title: res.msg, icon: 'none' })
+  }
+  ```
+- 错误示例（❌ 禁止）：
+  ```typescript
+  try {
+      const res = await didappLogin(formData)
+      // ...
+  } catch (error) {
+      // 永远不会进入这里，因为 Promise 不会 reject
+  }
+  ```
+
+**UI 还原度要求（强制）：**
+- 编写样式前，**必须先读取 UI 清单文件**（Spec 中"UI 清单参考"路径指定的文件）
+- 编写完每个区域的代码后，**立即回头对照 UI 清单中该区域的详细分析**，逐项 diff 以下属性：
+  - ✅ 颜色（文字色、背景色、图标色）— 是否使用了 UI 清单中指定的 TDesign 变量
+  - ✅ 间距（padding、margin、gap）— 数值是否与 UI 清单一致
+  - ✅ 字号和字重 — 是否与 UI 清单一致
+  - ✅ 圆角 — 是否与 UI 清单一致
+  - ✅ 图标 — 是否全部渲染（包括装饰性图标），颜色是否正确
+  - ✅ 尺寸（宽高）— 是否与 UI 清单一致
+- UI 清单中标注了特定颜色的图标/元素，必须通过组件 prop（如 `color`）或 CSS 覆盖实现，**不可使用组件默认样式敷衍**
+- 如 UI 清单描述模糊导致无法确定具体样式值，在代码中用注释标注 `// TODO: 确认设计稿具体数值` 并继续编写
+- **禁止"写完所有代码再统一校验样式"** — 必须写一个区域、diff 一个区域，避免遗漏累积
+
 ---
 
 ## 场景一检查清单
@@ -226,7 +263,7 @@ onLoad(() => {
 - [ ] 页面路由已在 `pages.json` 中注册
 - [ ] 使用了 `<script setup lang="ts">` 语法
 - [ ] 页面生命周期使用了 uni-app 钩子（`onLoad`/`onShow` 等）
-- [ ] TDesign 组件用法经过 `tdesign-uniapp` Skill 确认
+- [ ] TDesign 组件用法已逐个查阅 `tdesign-uniapp` Skill 文档确认（特别是值绑定方式：`v-model` vs `:value` + `@change`）
 - [ ] 待新建组件已通过 `use_skill("create-component")` 创建（而非内联编写），通用组件已在 `index.ts` 中导出
 - [ ] Store 的 state/getters 解构使用了 `storeToRefs()`
 - [ ] 所有代码符合 TypeScript 规范，无 `any` 类型
@@ -236,6 +273,10 @@ onLoad(() => {
 - [ ] 样式中颜色/字号/间距优先使用 `var(--td-xxx)` CSS Variables，无硬编码已有变量的值
 - [ ] 样式使用 SCSS 嵌套，层级不超过 3 层
 - [ ] 如有底部固定区域，已适配 `safe-area-inset-bottom`
+- [ ] **UI 还原度验证**：已逐区域对照 UI 清单文件，逐项 diff 颜色、间距、字号、圆角、图标、尺寸，确认与清单描述一致（写一个区域 diff 一个区域）
+- [ ] **图标/颜色还原**：UI 清单中标注为特定颜色的图标，已通过组件 `color` prop 或 CSS 覆盖实现，未使用组件默认颜色敷衍
+- [ ] **占位图格式**：所有 `<image>` 的 `src` 使用 `https://dummyimage.com/{宽}x{高}` 格式，未使用本地路径
+- [ ] **API 调用方式**：所有 API 调用使用 `if (res.ok)` 判断成功/失败，失败时使用 `res.msg` 提示，未使用 try/catch 包裹 API 调用
 
 ---
 
@@ -388,7 +429,7 @@ onLoad(() => {
 - [ ] 新增代码插入到正确的分区位置
 - [ ] 保持了现有代码的命名约定和结构
 - [ ] 如需新组件，已执行组件扫描与匹配，待新建组件已通过 `use_skill("create-component")` 创建
-- [ ] TDesign 组件用法经过 `tdesign-uniapp` Skill 确认
+- [ ] TDesign 组件用法已逐个查阅 `tdesign-uniapp` Skill 文档确认（特别是值绑定方式：`v-model` vs `:value` + `@change`）
 - [ ] Store 的 state/getters 解构使用了 `storeToRefs()`
 - [ ] 所有代码符合 TypeScript 规范，无 `any` 类型
 - [ ] 工具函数从 `@/utils` 导入，未在页面内重复编写已有工具逻辑
@@ -396,3 +437,5 @@ onLoad(() => {
 - [ ] 样式中颜色/字号/间距优先使用 `var(--td-xxx)` CSS Variables
 - [ ] 已执行影响检查：确认改动未破坏 Props/Store/API/路由的引用关系
 - [ ] 如修改了共享依赖（组件 Props、Store 签名、API 参数），已同步修改所有引用方
+- [ ] **UI 还原度验证**：如有 UI 清单，已逐区域对照确认颜色、间距、字号、圆角、图标、尺寸与清单描述一致
+- [ ] **API 调用方式**：所有 API 调用使用 `if (res.ok)` 判断成功/失败，失败时使用 `res.msg` 提示，未使用 try/catch 包裹 API 调用
