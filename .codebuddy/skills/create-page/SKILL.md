@@ -126,14 +126,14 @@ disable: false
 
 ## 第 2 步：创建待新建的组件（如有）
 
-对于第 0 步中标记为"待新建"的组件：
+对于第 0 步中标记为"待新建"的组件，**逐个调用 `create-component` Skill 完成创建**：
 
-- 读取 `04-组件规范` Rule，按其约束创建组件
-- 判断组件定位：
-  - 仅当前页面使用 → 放 `src/pages/<page-name>/components/<component-name>/index.vue`
-  - 可能被复用 → 放 `src/components/<component-name>/index.vue`
-- 创建 `index.vue`，如 Props 复杂则创建 `types.ts`
-- 如果是通用组件，在 `src/components/index.ts` 中导出并附带 JSDoc 注释
+1. **调用 Skill**：使用 `use_skill("create-component")` 加载组件创建技能
+2. **传入需求**：告知 Skill 组件名称、组件定位（通用/页面级）、所属页面、功能描述。示例："根据以下需求创建组件：组件名 `action-bar`，页面级组件，属于 `order-detail` 页面，功能为底部操作栏，包含取消和确认两个按钮"
+3. **Skill 自治**：`create-component` Skill 会自行执行其完整流程（重名检查 → 创建目录 → 编写代码 → 注册导出）
+4. **继续下一个**：如有多个待新建组件，重复步骤 1-3
+
+> ⚠️ **禁止在 create-page 中自行内联编写组件创建逻辑**，必须复用 `create-component` Skill 以保证组件创建只有一套标准。
 
 ---
 
@@ -227,7 +227,7 @@ onLoad(() => {
 - [ ] 使用了 `<script setup lang="ts">` 语法
 - [ ] 页面生命周期使用了 uni-app 钩子（`onLoad`/`onShow` 等）
 - [ ] TDesign 组件用法经过 `tdesign-uniapp` Skill 确认
-- [ ] 新建的通用组件已在 `src/components/index.ts` 中导出
+- [ ] 待新建组件已通过 `use_skill("create-component")` 创建（而非内联编写），通用组件已在 `index.ts` 中导出
 - [ ] Store 的 state/getters 解构使用了 `storeToRefs()`
 - [ ] 所有代码符合 TypeScript 规范，无 `any` 类型
 - [ ] 页面级组件放在 `src/pages/<page-name>/components/` 下
@@ -309,7 +309,10 @@ onLoad(() => {
 
 ## 第 2 步：组件扫描与匹配（如需新组件）
 
-如果变更方案中包含新增组件，执行与场景一第 0 步相同的组件扫描与匹配流程。
+如果变更方案中包含新增组件：
+
+1. **先执行组件扫描与匹配**：同场景一第 0 步，确定每个 UI 元素使用什么组件
+2. **如有待新建组件**：同场景一第 2 步，**调用 `use_skill("create-component")` 完成创建**，禁止自行内联编写
 
 如果变更不涉及新组件，跳过此步。
 
@@ -384,7 +387,7 @@ onLoad(() => {
 - [ ] 使用 `replace_in_file` 做增量修改，未重写整个文件
 - [ ] 新增代码插入到正确的分区位置
 - [ ] 保持了现有代码的命名约定和结构
-- [ ] 如需新组件，已执行组件扫描与匹配
+- [ ] 如需新组件，已执行组件扫描与匹配，待新建组件已通过 `use_skill("create-component")` 创建
 - [ ] TDesign 组件用法经过 `tdesign-uniapp` Skill 确认
 - [ ] Store 的 state/getters 解构使用了 `storeToRefs()`
 - [ ] 所有代码符合 TypeScript 规范，无 `any` 类型
