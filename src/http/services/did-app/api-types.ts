@@ -98,6 +98,22 @@ export interface DidappPrivateKeyRecoveryResult {
     privateKey: string
 }
 
+// ========== 获取手机验证码 ==========
+
+/** 获取手机验证码 - 请求体 */
+export interface DidappSendPhoneAuthCodeBody {
+    /** 手机号 */
+    phone: string
+}
+
+// ========== 获取邮箱验证码 ==========
+
+/** 获取邮箱验证码 - 请求体 */
+export interface DidappSendEmailAuthCodeBody {
+    /** 邮箱地址 */
+    email: string
+}
+
 // ========== 主管理员审核（发送 EnKey） ==========
 
 /** 主管理员审核 - 请求体 */

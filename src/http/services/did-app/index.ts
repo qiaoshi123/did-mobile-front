@@ -8,6 +8,8 @@ import { didappClient } from './client'
 import type {
     DidappCreateUserBody,
     DidappCreateUserResult,
+    DidappSendPhoneAuthCodeBody,
+    DidappSendEmailAuthCodeBody,
     DidappAuthCodeVerifyBody,
     DidappLoginBody,
     DidappLoginResult,
@@ -26,6 +28,18 @@ import type { DidappUserInfo } from './model-types'
 /** 创建企业账号 */
 export const didappCreateUser = (data: DidappCreateUserBody) => {
     return didappClient.post<DidappCreateUserResult>('/login/createUser', { data })
+}
+
+// ========== 验证码模块 ==========
+
+/** 获取手机验证码 */
+export const didappSendPhoneAuthCode = (data: DidappSendPhoneAuthCodeBody) => {
+    return didappClient.post<null>('/login/authCode', { data })
+}
+
+/** 获取邮箱验证码 */
+export const didappSendEmailAuthCode = (data: DidappSendEmailAuthCodeBody) => {
+    return didappClient.post<null>('/login/emailAuthCode', { data })
 }
 
 // ========== 登录模块 ==========

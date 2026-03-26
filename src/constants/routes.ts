@@ -10,5 +10,6 @@
 /** 首页 */
 export const PAGE_HOME = '/pages/index/index'
 
-/** 登录页 */
-export const PAGE_LOGIN = '/pages/login/index'
+
+
+

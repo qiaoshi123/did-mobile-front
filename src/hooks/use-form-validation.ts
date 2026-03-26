@@ -17,6 +17,18 @@
  *             { required: true, message: '请输入姓名' },
  *             { minLength: 2, message: '姓名至少 2 个字符' },
  *         ],
+ *         // validator 返回 string 时，直接用该 string 作为错误提示（message 可省略）
+ *         userName: [
+ *             { required: true, message: '请输入企业账户名' },
+ *             {
+ *                 validator: (value: unknown) => {
+ *                     const v = value as string
+ *                     if (v.length < 3 || v.length > 10) return '企业账户名需3-10位'
+ *                     if (!/^[\u4e00-\u9fa5a-zA-Z]/.test(v)) return '必须以汉字或字母开头'
+ *                     return true
+ *                 },
+ *             },
+ *         ],
  *     },
  * })
  *
@@ -44,10 +56,15 @@ export interface ValidationRule {
     min?: number
     /** 最大值（数字） */
     max?: number
-    /** 校验失败时的提示信息 */
-    message: string
-    /** 自定义校验函数，返回 true 表示通过 */
-    validator?: (value: unknown) => boolean | Promise<boolean>
+    /** 校验失败时的提示信息（当 validator 返回 string 时可省略，以 validator 返回值优先） */
+    message?: string
+    /**
+     * 自定义校验函数
+     * - 返回 true 表示通过
+     * - 返回 false 表示失败（使用 message 作为错误提示）
+     * - 返回 string 表示失败（使用该 string 作为错误提示，覆盖 message）
+     */
+    validator?: (value: unknown) => boolean | string | Promise<boolean | string>
 }
 
 /** 字段校验规则映射 */
@@ -86,44 +103,50 @@ export interface UseFormValidationReturn {
  * 校验单个值是否符合规则
  * @param value - 待校验值
  * @param rule - 校验规则
- * @returns 是否通过
+ * @returns null 表示通过，string 表示失败的错误信息
  */
-const checkRule = async (value: unknown, rule: ValidationRule): Promise<boolean> => {
+const checkRule = async (value: unknown, rule: ValidationRule): Promise<string | null> => {
+    const fallbackMessage = rule.message ?? '校验失败'
+
     // 必填校验
     if (rule.required) {
         if (value === undefined || value === null || value === '') {
-            return false
+            return fallbackMessage
         }
     }
 
     // 非必填且值为空时，跳过后续校验
     if (!rule.required && (value === undefined || value === null || value === '')) {
-        return true
+        return null
     }
 
     // 正则校验
     if (rule.pattern && typeof value === 'string') {
-        if (!rule.pattern.test(value)) return false
+        if (!rule.pattern.test(value)) return fallbackMessage
     }
 
     // 长度校验
     if (typeof value === 'string') {
-        if (rule.minLength !== undefined && value.length < rule.minLength) return false
-        if (rule.maxLength !== undefined && value.length > rule.maxLength) return false
+        if (rule.minLength !== undefined && value.length < rule.minLength) return fallbackMessage
+        if (rule.maxLength !== undefined && value.length > rule.maxLength) return fallbackMessage
     }
 
     // 数值范围校验
     if (typeof value === 'number') {
-        if (rule.min !== undefined && value < rule.min) return false
-        if (rule.max !== undefined && value > rule.max) return false
+        if (rule.min !== undefined && value < rule.min) return fallbackMessage
+        if (rule.max !== undefined && value > rule.max) return fallbackMessage
     }
 
     // 自定义校验函数
     if (rule.validator) {
-        return await rule.validator(value)
+        const result = await rule.validator(value)
+        if (result === true) return null
+        if (result === false) return fallbackMessage
+        // result 是 string，直接作为错误信息
+        return result
     }
 
-    return true
+    return null
 }
 
 /**
@@ -156,9 +179,9 @@ export const useFormValidation = (options: UseFormValidationOptions): UseFormVal
         }
 
         for (const rule of fieldRules) {
-            const passed = await checkRule(value, rule)
-            if (!passed) {
-                errors.value[field] = rule.message
+            const errorMsg = await checkRule(value, rule)
+            if (errorMsg !== null) {
+                errors.value[field] = errorMsg
                 return false
             }
         }
