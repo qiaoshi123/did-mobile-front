@@ -27,7 +27,7 @@ disable: false
 | `src/constants/routes.ts` | ✅ 路由路径常量的增删改 |
 | `src/pages.json` | ✅ 页面路由配置的增删改（pages 数组、subPackages 数组、preloadRule） |
 | 页面目录创建 | ✅ 确保页面目录存在（`src/pages/<name>/` 或 `src/pages-sub/<module>/<name>/`） |
-| 页面 .vue 文件 | ❌ 不涉及（由 create-ui / create-logic 处理） |
+| 页面 .vue 文件 | ❌ 不涉及（由 create-sfc 处理） |
 | globalStyle | ⚠️ 除非明确要求，否则不修改全局样式 |
 
 ---
@@ -174,7 +174,7 @@ export const PAGE_XXX = '/pages/<name>/index'
 | 主包 | `src/pages/<name>/` |
 | 分包 | `src/pages-sub/<module>/<name>/` |
 
-> 只创建目录，不创建 `.vue` 文件（由 create-ui / create-logic 负责）。
+> 只创建目录，不创建 `.vue` 文件（由 create-sfc 负责）。
 > 如果目录已存在，跳过此步。
 
 ---

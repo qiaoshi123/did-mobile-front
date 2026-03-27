@@ -10,8 +10,7 @@
 /** 首页 */
 export const PAGE_HOME = '/pages/index/index'
 
-/** 注册 */
-export const PAGE_REGISTER = '/pages/register/index'
+
 
 
 

@@ -196,8 +196,7 @@ Spec 来源：<Spec 文件路径>
 | create-store | 创建/修改 Pinia Store |
 | create-hook | 创建/修改 Composable |
 | create-util | 创建/修改工具函数 |
-| create-ui | 创建 UI（模板+样式+骨架 script） |
-| create-logic | 创建/填充业务逻辑代码 |
+| create-sfc | 创建/修改完整的 Vue SFC 文件（template + script + style） |
 
 ---
 

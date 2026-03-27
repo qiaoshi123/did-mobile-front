@@ -136,8 +136,7 @@ disable: false
 ## 与其它技能的关系
 
 - **create-proposal**：本技能产出的 UI 清单是 `create-proposal` 的核心输入之一。先跑 `design-analysis` 产出 UI 清单 → 再跑 `create-proposal` 制定实施计划
-- **create-page**：开发页面时，引用 UI 清单中的区域描述和样式规范进行精确还原
-- **create-component**：开发组件时，引用 UI 清单中的组件映射表确定 Props 和样式
+- **create-sfc**：开发页面或组件时，`create-sfc` 引用 UI 清单中的区域描述和样式规范进行精确还原。一个 `.vue` 文件 = 一个 `create-sfc` 任务
 
 ---
 

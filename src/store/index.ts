@@ -20,6 +20,3 @@ export default pinia
 
 /** 计数器 Store（示例），包含 count 状态和 increment 方法 */
 export * from './counter'
-
-/** 认证 Store，管理 token 和用户信息 */
-export * from './auth'
