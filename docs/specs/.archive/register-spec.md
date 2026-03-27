@@ -1,6 +1,6 @@
 # 注册页 — 实施计划（Spec）
 
-> **状态**：🟢 定稿
+> **状态**：✅ 已完成
 > **关联 UI 清单**：无（无设计稿）
 > **关联 API 文档**：`src/http/services/did-app/`（已有封装）
 > **关联交互文档**：`docs/Interactions/register-desc.md`
@@ -48,12 +48,12 @@
 
 | 序号 | 任务名称 | 触发 Skill | 依赖 | 状态 |
 |------|---------|-----------|------|------|
-| T1 | 注册页路由配置 | create-route | — | ⬜ |
-| T2 | 新建 Auth Store | create-store | — | ⬜ |
-| T3 | 新建校验工具函数 | create-util | — | ⬜ |
-| T4 | 新建密码明文/密文切换 Hook | create-hook | — | ⬜ |
-| T5 | 新建发送验证码 Hook（含倒计时） | create-hook | — | ⬜ |
-| T6 | 注册页业务逻辑 | create-logic | T1, T2, T3, T4, T5 | ⬜ |
+| T1 | 注册页路由配置 | create-route | — | ✅ |
+| T2 | 新建 Auth Store | create-store | — | ✅ |
+| T3 | 新建校验工具函数 | create-util | — | ✅ |
+| T4 | 新建密码明文/密文切换 Hook | create-hook | — | ✅ |
+| T5 | 新建发送验证码 Hook（含倒计时） | create-hook | — | ✅ |
+| T6 | 注册页业务逻辑 | create-logic | T1, T2, T3, T4, T5 | ✅ |
 
 ---
 

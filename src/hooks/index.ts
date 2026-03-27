@@ -24,3 +24,13 @@ export { usePagination } from './use-pagination'
 // ========== 表单校验 ==========
 /** 通用表单校验逻辑，支持规则配置、实时校验、提交前校验 */
 export { useFormValidation } from './use-form-validation'
+
+// ========== 密码切换 ==========
+/** 密码明文/密文切换，提供可见性状态和切换方法 */
+export { usePasswordToggle } from './use-password-toggle'
+export type { UsePasswordToggleReturn } from './use-password-toggle'
+
+// ========== 验证码发送 ==========
+/** 发送验证码 + 倒计时，自动判断手机号/邮箱调用对应接口 */
+export { useSendCode } from './use-send-code'
+export type { UseSendCodeOptions, UseSendCodeReturn } from './use-send-code'

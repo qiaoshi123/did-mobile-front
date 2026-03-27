@@ -39,3 +39,14 @@ export {
     getStartOfDay,
     getEndOfDay,
 } from './format'
+
+// ========== 校验工具 ==========
+/** 企业账户名、手机号、邮箱、密码、管理员名称等通用校验函数 */
+export {
+    validateUserName,
+    validatePhone,
+    validateEmail,
+    validatePassword,
+    validateAdminName,
+    getContactType,
+} from './validate'
