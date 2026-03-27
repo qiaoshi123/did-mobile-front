@@ -1,5 +1,5 @@
 ---
-description: Spec 产出的强制约束。当涉及"生成 Spec、实施计划、任务拆解、开发提案"时，此规则始终生效。
+description: Spec 产出与执行的强制约束。当涉及"生成 Spec、实施计划、任务拆解、开发提案"或"执行 Spec、按 Spec 开发、开始执行"时，此规则始终生效。
 alwaysApply: true
 ---
 
@@ -12,3 +12,4 @@ alwaysApply: true
 3. **禁止包含实现细节**：Spec 中禁止出现代码块、函数签名、TS 接口/类型定义、正则表达式、import 语句、具体字段名/参数名/返回值类型。只描述"做什么"，不描述"怎么做"
 4. **必须遵循模板格式**：Spec 文档必须严格按照 `.codebuddy/skills/create-proposal/rules/output-spec.md` 中定义的模板结构编写
 5. **禁止自动执行**：Spec 生成完成后，**必须完全停止**，等待用户手动触发执行。禁止生成 Spec 后自动开始实施任务、调用下游 Skill、创建 TODO 列表或进行任何开发工作。用户需要通过明确指令（如"开始执行"、"执行 Spec"、"按照 Spec 开发"等）手动触发任务执行
+6. **必须调用 `execute-proposal` Skill 执行**：任何涉及"执行 Spec / 按照 Spec 开发 / 开始执行 / 执行任务 / 执行计划 / 按 Spec 执行 / 开始开发"的请求，**必须**调用 `execute-proposal` Skill，禁止跳过 Skill 直接编写代码。`execute-proposal` 会逐个调用下游 Skill（如 `create-logic`、`create-store` 等），确保每个 Skill 的内部规则被正确加载和遵循
