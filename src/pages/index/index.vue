@@ -19,23 +19,22 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { didappGetHealth } from '@/http'
-import { useCounterStore } from '@/store'
+import { useAuthStore, useCounterStore } from '@/store'
 import { storeToRefs } from 'pinia'
+const { userInfo, token, setAuth } = useAuthStore();
+console.log(userInfo, token);
+
+
 
 const title = ref('Hello')
 const counter = useCounterStore()
-const {count,doubleCount} = storeToRefs(counter)
+const { count, doubleCount } = storeToRefs(counter)
 
 onLoad(async () => {
   const res = await didappGetHealth()
   if (res.ok) {
     console.log(res.data.version, res.data.personAuthEnable)
   }
-
-  // 读取
-  console.log(count.value)       // 0
-  console.log(doubleCount.value) // 0
-
 })
 </script>
 

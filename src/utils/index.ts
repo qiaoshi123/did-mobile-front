@@ -41,6 +41,11 @@ export {
 } from './format'
 
 // ========== 校验工具 ==========
-/** 企业账户名、手机号、邮箱、密码、管理员名称等通用校验函数 */
+/** 企业账户名、手机号、邮箱、密码、管理员名称等通用校验函数（validate 前缀，返回错误信息或空字符串） */
 export {
+    validateAccountName,
+    validatePhone,
+    validateEmail,
+    validatePassword,
+    validateAdminName,
 } from './validate'

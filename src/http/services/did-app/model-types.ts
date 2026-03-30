@@ -6,7 +6,7 @@ export interface DidappAuthResult {
     /** 登录令牌 */
     token: string
     /** 用户信息 */
-    useInfo: DidappUserInfo
+    userInfo: DidappUserInfo
 }
 
 /** 用户信息 */
