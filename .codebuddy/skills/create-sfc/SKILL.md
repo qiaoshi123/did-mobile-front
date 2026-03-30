@@ -466,6 +466,7 @@ console.log(userName.value)
 - [ ] 事件处理函数有 JSDoc 注释
 - [ ] template 中无复杂逻辑（提取为 computed 或方法）
 - [ ] template 绑定与 script 变量名/函数名一致
+- [ ] **多端兼容性检查**：script 中使用的每个全局 API / 构造函数，确认它属于 ECMAScript 语言规范而非浏览器/Node.js 宿主环境提供的；不确定时先搜索 MDN 确认其所属规范
 
 ### 页面
 

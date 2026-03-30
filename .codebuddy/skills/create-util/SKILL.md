@@ -201,3 +201,4 @@ export { formatDate, formatPrice, formatPhone } from './format'  // ← 追加 f
 - [ ] 值导出和类型导出分开写
 - [ ] 已在 `src/utils/index.ts` 中注册导出，带分组注释
 - [ ] 函数是纯函数，不依赖 Vue 响应式 API
+- [ ] **多端兼容性检查**：函数中使用的每个全局 API / 构造函数，确认它属于 ECMAScript 语言规范而非浏览器/Node.js 宿主环境提供的；不确定时先搜索 MDN 确认其所属规范

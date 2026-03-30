@@ -199,3 +199,4 @@ console.log(userName.value)
 - [ ] 如需持久化，已设置 `persist: true`
 - [ ] Store 中没有直接耦合 UI 组件
 - [ ] 所有代码符合 TypeScript 规范，无 `any` 类型
+- [ ] **多端兼容性检查**：Store 中使用的每个全局 API / 构造函数，确认它属于 ECMAScript 语言规范而非浏览器/Node.js 宿主环境提供的；不确定时先搜索 MDN 确认其所属规范

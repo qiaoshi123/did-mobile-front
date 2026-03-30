@@ -310,3 +310,4 @@ if (res.ok) {
 - [ ] 所有 API 函数都通过 `index.ts` 导出
 - [ ] 如为新建服务，已在 `src/http/index.ts` 中注册导出
 - [ ] 如为新建服务，`client.ts` 中使用了条件编译设置 baseUrl
+- [ ] **多端兼容性检查**：API 封装中使用的每个全局 API / 构造函数，确认它属于 ECMAScript 语言规范而非浏览器/Node.js 宿主环境提供的；不确定时先搜索 MDN 确认其所属规范

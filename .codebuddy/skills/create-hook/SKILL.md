@@ -238,3 +238,4 @@ export type { UseXxxOptions, UseXxxReturn } from './use-<name>'
 - [ ] 已在 `src/hooks/index.ts` 中注册导出（值和类型分开）
 - [ ] 所有代码符合 TypeScript 规范，无 `any` 类型
 - [ ] Hook 内部没有直接修改其他页面的状态
+- [ ] **多端兼容性检查**：Hook 中使用的每个全局 API / 构造函数，确认它属于 ECMAScript 语言规范而非浏览器/Node.js 宿主环境提供的；不确定时先搜索 MDN 确认其所属规范
